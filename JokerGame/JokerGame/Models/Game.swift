@@ -1,4 +1,5 @@
 import Foundation
+import AVFoundation
 
 class Game: ObservableObject {
     enum Language: String, CaseIterable {
@@ -154,6 +155,8 @@ class Game: ObservableObject {
     
     @Published var gameMode: GameMode = .standard
     @Published var khisthiMode: KhisthiMode = .speci
+    
+    private var audioPlayer: AVAudioPlayer?
     
     class Player: Identifiable {
         let id = UUID()
@@ -465,5 +468,42 @@ class Game: ObservableObject {
         case .nines:
             return localizedString("ninesModeDescription")
         }
+    }
+    
+    func playBackgroundMusic() {
+        print("Attempting to play background music...")
+        
+        // Try to find the file in the main bundle
+        if let url = Bundle.main.url(forResource: "background_music", withExtension: "mp3") {
+            print("✅ Found music file in main bundle at: \(url.path)")
+            playMusicFromURL(url)
+        } else {
+            print("❌ Could not find background_music.mp3 in main bundle")
+            print("Current bundle path: \(Bundle.main.bundlePath)")
+            print("Available resources: \(Bundle.main.paths(forResourcesOfType: "mp3", inDirectory: nil))")
+        }
+    }
+    
+    private func playMusicFromURL(_ url: URL) {
+        do {
+            audioPlayer = try AVAudioPlayer(contentsOf: url)
+            print("✅ Successfully created audio player")
+            
+            audioPlayer?.numberOfLoops = -1 // Loop indefinitely
+            audioPlayer?.volume = 0.5 // Set volume to 50%
+            
+            if audioPlayer?.play() == true {
+                print("✅ Successfully started playing music")
+            } else {
+                print("❌ Failed to start playing music")
+            }
+        } catch {
+            print("❌ Error playing background music: \(error)")
+        }
+    }
+    
+    func stopBackgroundMusic() {
+        audioPlayer?.stop()
+        audioPlayer = nil
     }
 } 

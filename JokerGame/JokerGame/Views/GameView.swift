@@ -18,6 +18,7 @@ struct SplashScreen: View {
     @State private var isAnimating = false
     @State private var showMainContent = false
     @Binding var showSplash: Bool
+    @ObservedObject var game: Game
     
     var body: some View {
         ZStack {
@@ -41,6 +42,8 @@ struct SplashScreen: View {
             }
         }
         .onAppear {
+            game.playBackgroundMusic()
+            
             withAnimation(.spring(response: 0.8, dampingFraction: 0.6)) {
                 isAnimating = true
             }
@@ -54,6 +57,7 @@ struct SplashScreen: View {
         .opacity(showMainContent ? 0 : 1)
         .onChange(of: showMainContent) { newValue in
             if newValue {
+                game.stopBackgroundMusic()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     showSplash = false
                 }
@@ -514,7 +518,7 @@ struct GameView: View {
     var body: some View {
         ZStack {
             if showSplash {
-                SplashScreen(showSplash: $showSplash)
+                SplashScreen(showSplash: $showSplash, game: game)
             } else {
                 NavigationView {
                     if !game.isGameSetup {
