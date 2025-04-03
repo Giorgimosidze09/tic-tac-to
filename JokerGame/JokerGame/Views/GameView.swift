@@ -12,6 +12,14 @@ enum AppTheme: String, CaseIterable {
     case light = "Light"
     case dark = "Dark"
     case system = "System"
+    
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .light: return .light
+        case .dark: return .dark
+        case .system: return nil
+        }
+    }
 }
 
 struct SplashScreen: View {
@@ -115,11 +123,6 @@ private struct ThemeSection: View {
             .pickerStyle(SegmentedPickerStyle())
             .background(cardBackgroundColor)
             .cornerRadius(8)
-            .onChange(of: selectedTheme) { newValue in
-                withAnimation {
-                    game.objectWillChange.send()
-                }
-            }
         }
     }
 }
@@ -204,11 +207,10 @@ struct SettingsView: View {
     @Environment(\.presentationMode) var presentationMode
     
     private var currentTheme: ColorScheme {
-        switch selectedTheme {
-        case .light: return .light
-        case .dark: return .dark
-        case .system: return colorScheme
+        if let theme = selectedTheme.colorScheme {
+            return theme
         }
+        return colorScheme
     }
     
     private var isDarkMode: Bool {
@@ -363,16 +365,22 @@ struct GameView: View {
     @State private var selectedGameMode: Game.GameMode = .standard
     @State private var selectedKhisthi: Game.KhisthiMode = .speci
     @State private var showSplash = true
-    @State private var selectedTheme: AppTheme = .system
+    @State private var selectedTheme: AppTheme = {
+        if let savedTheme = UserDefaults.standard.string(forKey: "selectedTheme"),
+           let theme = AppTheme(rawValue: savedTheme) {
+            return theme
+        }
+        return .system
+    }()
     @Environment(\.colorScheme) var colorScheme
     @State private var showingSettings = false
+    @State private var forceThemeUpdate = false
     
     private var currentTheme: ColorScheme {
-        switch selectedTheme {
-        case .light: return .light
-        case .dark: return .dark
-        case .system: return colorScheme
+        if let theme = selectedTheme.colorScheme {
+            return theme
         }
+        return colorScheme
     }
     
     private var isDarkMode: Bool {
@@ -763,6 +771,25 @@ struct GameView: View {
                         }
                     }
                 }
+            }
+        }
+        .preferredColorScheme(currentTheme)
+        .onChange(of: colorScheme) { _ in
+            if selectedTheme == .system {
+                withAnimation {
+                    forceThemeUpdate.toggle()
+                }
+            }
+        }
+        .onChange(of: selectedTheme) { newValue in
+            withAnimation {
+                UserDefaults.standard.set(newValue.rawValue, forKey: "selectedTheme")
+                forceThemeUpdate.toggle()
+            }
+        }
+        .onChange(of: forceThemeUpdate) { _ in
+            withAnimation {
+                game.objectWillChange.send()
             }
         }
     }
