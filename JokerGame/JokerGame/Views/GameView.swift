@@ -205,6 +205,7 @@ struct SettingsView: View {
     @ObservedObject var game: Game
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.presentationMode) var presentationMode
+    @State private var lastSystemTheme: ColorScheme?
     
     private var currentTheme: ColorScheme {
         if let theme = selectedTheme.colorScheme {
@@ -351,6 +352,17 @@ struct SettingsView: View {
             })
         }
         .preferredColorScheme(currentTheme)
+        .onChange(of: colorScheme) { newValue in
+            if selectedTheme == .system {
+                withAnimation {
+                    lastSystemTheme = newValue
+                    game.objectWillChange.send()
+                }
+            }
+        }
+        .onAppear {
+            lastSystemTheme = colorScheme
+        }
     }
 }
 
@@ -374,7 +386,7 @@ struct GameView: View {
     }()
     @Environment(\.colorScheme) var colorScheme
     @State private var showingSettings = false
-    @State private var forceThemeUpdate = false
+    @State private var lastSystemTheme: ColorScheme?
     
     private var currentTheme: ColorScheme {
         if let theme = selectedTheme.colorScheme {
@@ -774,23 +786,22 @@ struct GameView: View {
             }
         }
         .preferredColorScheme(currentTheme)
-        .onChange(of: colorScheme) { _ in
+        .onChange(of: colorScheme) { newValue in
             if selectedTheme == .system {
                 withAnimation {
-                    forceThemeUpdate.toggle()
+                    lastSystemTheme = newValue
+                    game.objectWillChange.send()
                 }
             }
         }
         .onChange(of: selectedTheme) { newValue in
             withAnimation {
                 UserDefaults.standard.set(newValue.rawValue, forKey: "selectedTheme")
-                forceThemeUpdate.toggle()
-            }
-        }
-        .onChange(of: forceThemeUpdate) { _ in
-            withAnimation {
                 game.objectWillChange.send()
             }
+        }
+        .onAppear {
+            lastSystemTheme = colorScheme
         }
     }
 }
