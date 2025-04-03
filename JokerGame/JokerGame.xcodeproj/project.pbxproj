@@ -11,6 +11,7 @@
 		1A2B3C4D5E6F7G8H9I0L /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7G8H9I0M /* GameView.swift */; };
 		1A2B3C4D5E6F7G8H9I0N /* JokerGameApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7G8H9I0O /* JokerGameApp.swift */; };
 		6707E1E12D9EE21A0090B667 /* background_music.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 6707E1E02D9EE21A0090B667 /* background_music.mp3 */; };
+		671D7B2E2D9F264500A8A06C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 671D7B2D2D9F264500A8A06C /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -19,6 +20,7 @@
 		1A2B3C4D5E6F7G8H9I0O /* JokerGameApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JokerGameApp.swift; sourceTree = "<group>"; };
 		1A2B3C4D5E6F7G8H9I0P /* JokerGame.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JokerGame.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6707E1E02D9EE21A0090B667 /* background_music.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = background_music.mp3; sourceTree = "<group>"; };
+		671D7B2D2D9F264500A8A06C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -35,6 +37,7 @@
 		1A2B3C4D5E6F7G8H9I0R = {
 			isa = PBXGroup;
 			children = (
+				671D7B2D2D9F264500A8A06C /* Assets.xcassets */,
 				6707E1E02D9EE21A0090B667 /* background_music.mp3 */,
 				1A2B3C4D5E6F7G8H9I0S /* JokerGame */,
 				1A2B3C4D5E6F7G8H9I0T /* Products */,
@@ -132,6 +135,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				671D7B2E2D9F264500A8A06C /* Assets.xcassets in Resources */,
 				6707E1E12D9EE21A0090B667 /* background_music.mp3 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -271,6 +275,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"JokerGame/Preview Content\"";
@@ -295,6 +300,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"JokerGame/Preview Content\"";
