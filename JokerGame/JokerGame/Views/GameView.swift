@@ -1154,6 +1154,34 @@ struct RoundInfoView: View {
         isDarkMode ? Color(.secondarySystemBackground) : Color(.systemBackground)
     }
     
+    private var totalBids: Int {
+        game.players.reduce(0) { $0 + ($1.currentBid == -1 ? 0 : $1.currentBid) }
+    }
+    
+    private var cardsInRound: Int {
+        game.cardsInRound()
+    }
+    
+    private var gameStatus: String {
+        if !game.isBiddingComplete {
+            return game.localizedString("biddingPhase")
+        }
+        
+        if totalBids < cardsInRound {
+            return "\(game.localizedString("shet'enva")): \(cardsInRound - totalBids)"
+        } else if totalBids > cardsInRound {
+            // Calculate excess bids (total bids - cards in round)
+            let excessBids = totalBids - cardsInRound
+            
+            // If excess bids exceed the cards in round, ts'aglejva is capped at cards in round
+            // Otherwise, ts'aglejva is the excess bids
+            let tsaglejva = min(excessBids, cardsInRound)
+            return "\(game.localizedString("ts'aglejva")): \(tsaglejva)"
+        } else {
+            return game.localizedString("biddingComplete")
+        }
+    }
+    
     private var roundDescription: String {
         switch game.currentRound {
         case 1...8:
@@ -1176,13 +1204,8 @@ struct RoundInfoView: View {
                 .foregroundColor(.jokerRed)
             
             HStack(spacing: 15) {
-                if game.isBiddingComplete {
-                    Label(game.localizedString("biddingComplete"), systemImage: "checkmark.circle.fill")
-                        .foregroundColor(.jokerGreen)
-                } else {
-                    Label(game.localizedString("biddingPhase"), systemImage: "circle.fill")
-                        .foregroundColor(.jokerRed)
-                }
+                Label(gameStatus, systemImage: game.isBiddingComplete ? "checkmark.circle.fill" : "circle.fill")
+                    .foregroundColor(game.isBiddingComplete ? .jokerGreen : .jokerRed)
                 
                 if game.isRoundComplete {
                     Label(game.localizedString("roundComplete"), systemImage: "checkmark.circle.fill")

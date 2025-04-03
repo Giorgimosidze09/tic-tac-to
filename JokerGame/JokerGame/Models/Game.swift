@@ -59,6 +59,8 @@ class Game: ObservableObject {
                 "speciModeDescription": "Speci mode: Special scoring for khisthi",
                 "fixed200ModeDescription": "Fixed -200: Standard khisthi penalty",
                 "fixed500ModeDescription": "Fixed -500: Higher khisthi penalty",
+                "shet'enva": "Underbid",
+                "ts'aglejva": "Overbid",
                 "gameRulesDescription": """
                 • Each round, players bid on how many tricks they'll take
                 • The dealer cannot bid the total number of cards
@@ -115,6 +117,8 @@ class Game: ObservableObject {
                 "speciModeDescription": "სპეცი რეჟიმი: სპეციალური ქულების დათვლა ქიშტისთვის",
                 "fixed200ModeDescription": "ფიქსირებული -200: სტანდარტული ქიშტის ჯარიმა",
                 "fixed500ModeDescription": "ფიქსირებული -500: მაღალი ქიშტის ჯარიმა",
+                "shet'enva": "შეტენვა",
+                "ts'aglejva": "წაგლეჯვა",
                 "gameRulesDescription": """
                 • ყოველ რაუნდში მოთამაშეები აცხადებენ რამდენ შემტაცებელს აიღებენ
                 • დილერს არ შეუძლია ბარათების რაოდენობის ტოლი შეთავაზების გაკეთება
