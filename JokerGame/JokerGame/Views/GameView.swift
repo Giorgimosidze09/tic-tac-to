@@ -66,6 +66,135 @@ struct SplashScreen: View {
     }
 }
 
+private struct LanguageSection: View {
+    @ObservedObject var game: Game
+    @Binding var selectedLanguage: Game.Language
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Picker("Language", selection: $selectedLanguage) {
+                ForEach(Game.Language.allCases, id: \.self) { language in
+                    Text(language.rawValue).tag(language)
+                }
+            }
+            .pickerStyle(SegmentedPickerStyle())
+        }
+    }
+}
+
+private struct ThemeSection: View {
+    @ObservedObject var game: Game
+    @Binding var selectedTheme: AppTheme
+    @Environment(\.colorScheme) var colorScheme
+    
+    private var isDarkMode: Bool {
+        colorScheme == .dark
+    }
+    
+    private var cardBackgroundColor: Color {
+        isDarkMode ? Color(.secondarySystemBackground) : Color(.systemBackground)
+    }
+    
+    private var textColor: Color {
+        isDarkMode ? .white : .black
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(game.localizedString("theme"))
+                .font(.headline)
+                .foregroundColor(textColor)
+            
+            Picker("Theme", selection: $selectedTheme) {
+                ForEach(AppTheme.allCases, id: \.self) { theme in
+                    Text(game.localizedString(theme.rawValue.lowercased()))
+                        .tag(theme)
+                        .foregroundColor(textColor)
+                }
+            }
+            .pickerStyle(SegmentedPickerStyle())
+            .background(cardBackgroundColor)
+            .cornerRadius(8)
+            .onChange(of: selectedTheme) { newValue in
+                withAnimation {
+                    game.objectWillChange.send()
+                }
+            }
+        }
+    }
+}
+
+private struct GameModeSection: View {
+    @ObservedObject var game: Game
+    @Binding var selectedGameMode: Game.GameMode
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Picker("Game Mode", selection: $selectedGameMode) {
+                ForEach(Game.GameMode.allCases, id: \.self) { mode in
+                    Text(game.localizedString(mode.rawValue))
+                        .tag(mode)
+                }
+            }
+            .pickerStyle(SegmentedPickerStyle())
+            
+            Text(game.getGameModeDescription(selectedGameMode))
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .padding(.top, 4)
+        }
+    }
+}
+
+private struct KhisthiModeSection: View {
+    @ObservedObject var game: Game
+    @Binding var selectedKhisthi: Game.KhisthiMode
+    
+    private var khisthiModeDescription: String {
+        switch selectedKhisthi {
+        case .speci:
+            return game.localizedString("speciModeDescription")
+        case .fixed200:
+            return game.localizedString("fixed200ModeDescription")
+        case .fixed500:
+            return game.localizedString("fixed500ModeDescription")
+        }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Picker("Khisthi Mode", selection: $selectedKhisthi) {
+                ForEach(Game.KhisthiMode.allCases, id: \.self) { mode in
+                    Text(game.localizedString(mode.rawValue.lowercased()))
+                        .tag(mode)
+                }
+            }
+            .pickerStyle(SegmentedPickerStyle())
+            
+            Text(khisthiModeDescription)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .padding(.top, 4)
+        }
+    }
+}
+
+private struct GameRulesSection: View {
+    @ObservedObject var game: Game
+    
+    private var gameRules: String {
+        game.localizedString("gameRulesDescription")
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(gameRules)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+    }
+}
+
 struct SettingsView: View {
     @Binding var selectedTheme: AppTheme
     @Binding var selectedGameMode: Game.GameMode
@@ -74,8 +203,16 @@ struct SettingsView: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.presentationMode) var presentationMode
     
+    private var currentTheme: ColorScheme {
+        switch selectedTheme {
+        case .light: return .light
+        case .dark: return .dark
+        case .system: return colorScheme
+        }
+    }
+    
     private var isDarkMode: Bool {
-        colorScheme == .dark
+        currentTheme == .dark
     }
     
     private var cardBackgroundColor: Color {
@@ -122,14 +259,7 @@ struct SettingsView: View {
                             .foregroundColor(.jokerRed)
                         
                         VStack(alignment: .leading, spacing: 8) {
-                            Picker("Language", selection: $game.selectedLanguage) {
-                                ForEach(Game.Language.allCases, id: \.self) { language in
-                                    Text(language.rawValue).tag(language)
-                                }
-                            }
-                            .pickerStyle(SegmentedPickerStyle())
-                            .background(cardBackgroundColor)
-                            .cornerRadius(8)
+                            LanguageSection(game: game, selectedLanguage: $game.selectedLanguage)
                         }
                     }
                     .padding()
@@ -147,20 +277,7 @@ struct SettingsView: View {
                             .foregroundColor(.jokerRed)
                         
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(game.localizedString("theme"))
-                                .font(.headline)
-                                .foregroundColor(textColor)
-                            
-                            Picker("Theme", selection: $selectedTheme) {
-                                ForEach(AppTheme.allCases, id: \.self) { theme in
-                                    Text(game.localizedString(theme.rawValue.lowercased()))
-                                        .tag(theme)
-                                        .foregroundColor(textColor)
-                                }
-                            }
-                            .pickerStyle(SegmentedPickerStyle())
-                            .background(cardBackgroundColor)
-                            .cornerRadius(8)
+                            ThemeSection(game: game, selectedTheme: $selectedTheme)
                         }
                     }
                     .padding()
@@ -178,18 +295,7 @@ struct SettingsView: View {
                             .foregroundColor(.jokerRed)
                         
                         VStack(alignment: .leading, spacing: 8) {
-                            Picker("Game Mode", selection: $selectedGameMode) {
-                                ForEach(Game.GameMode.allCases, id: \.self) { mode in
-                                    Text(game.localizedString(mode.rawValue))
-                                        .tag(mode)
-                                }
-                            }
-                            .pickerStyle(SegmentedPickerStyle())
-                            
-                            Text(game.getGameModeDescription(selectedGameMode))
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                                .padding(.top, 4)
+                            GameModeSection(game: game, selectedGameMode: $selectedGameMode)
                         }
                     }
                     .padding()
@@ -207,18 +313,7 @@ struct SettingsView: View {
                             .foregroundColor(.jokerRed)
                         
                         VStack(alignment: .leading, spacing: 8) {
-                            Picker("Khisthi Mode", selection: $selectedKhisthi) {
-                                ForEach(Game.KhisthiMode.allCases, id: \.self) { mode in
-                                    Text(game.localizedString(mode.rawValue.lowercased()))
-                                        .tag(mode)
-                                }
-                            }
-                            .pickerStyle(SegmentedPickerStyle())
-                            
-                            Text(khisthiModeDescription)
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                                .padding(.top, 4)
+                            KhisthiModeSection(game: game, selectedKhisthi: $selectedKhisthi)
                         }
                     }
                     .padding()
@@ -236,9 +331,7 @@ struct SettingsView: View {
                             .foregroundColor(.jokerRed)
                         
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(gameRules)
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
+                            GameRulesSection(game: game)
                         }
                     }
                     .padding()
@@ -255,6 +348,7 @@ struct SettingsView: View {
                 presentationMode.wrappedValue.dismiss()
             })
         }
+        .preferredColorScheme(currentTheme)
     }
 }
 
