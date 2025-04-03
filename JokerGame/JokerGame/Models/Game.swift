@@ -1,6 +1,17 @@
 import Foundation
 
 class Game: ObservableObject {
+    enum GameMode: String, CaseIterable {
+        case standard = "Standard (8-9-8-9)"
+        case nines = "All Nines (4x4)"
+    }
+    
+    enum KhisthiMode: String, CaseIterable {
+        case speci = "Speci"
+        case fixed200 = " -200"
+        case fixed500 = " -500"
+    }
+    
     @Published var players: [Player] = []
     @Published var currentRound: Int = 1
     @Published var isGameSetup = false
@@ -11,8 +22,8 @@ class Game: ObservableObject {
     private var roundScores: [[Int]] = []
     private var biddingOrder: [UUID] = []  // Track order of bidders
     
-    var gameMode: GameView.GameMode = .standard
-    var khisthiMode: GameView.KhisthiMode = .speci
+    @Published var gameMode: GameMode = .standard
+    @Published var khisthiMode: KhisthiMode = .speci
     
     class Player: Identifiable {
         let id = UUID()

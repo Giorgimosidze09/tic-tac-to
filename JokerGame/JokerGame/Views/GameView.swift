@@ -4,6 +4,233 @@ import Charts
 extension Color {
     static let gold = Color(red: 1.0, green: 0.84, blue: 0.0)
     static let darkBlue = Color(red: 0.1, green: 0.2, blue: 0.3)
+    static let jokerRed = Color(red: 0.8, green: 0.2, blue: 0.2)
+    static let jokerGreen = Color(red: 0.2, green: 0.6, blue: 0.3)
+}
+
+enum AppTheme: String, CaseIterable {
+    case light = "Light"
+    case dark = "Dark"
+    case system = "System"
+}
+
+struct SplashScreen: View {
+    @State private var isAnimating = false
+    @State private var showMainContent = false
+    @Binding var showSplash: Bool
+    
+    var body: some View {
+        ZStack {
+            Color.jokerRed
+                .ignoresSafeArea()
+            
+            VStack {
+                Image(systemName: "suit.spade.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 100, height: 100)
+                    .foregroundColor(.white)
+                    .scaleEffect(isAnimating ? 1.2 : 0.8)
+                    .rotationEffect(.degrees(isAnimating ? 360 : 0))
+                
+                Text("Joker")
+                    .font(.system(size: 48, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                    .opacity(isAnimating ? 1 : 0)
+                    .offset(y: isAnimating ? 0 : 20)
+            }
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.8, dampingFraction: 0.6)) {
+                isAnimating = true
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                withAnimation {
+                    showMainContent = true
+                }
+            }
+        }
+        .opacity(showMainContent ? 0 : 1)
+        .onChange(of: showMainContent) { newValue in
+            if newValue {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    showSplash = false
+                }
+            }
+        }
+    }
+}
+
+struct SettingsView: View {
+    @Binding var selectedTheme: AppTheme
+    @Binding var selectedGameMode: Game.GameMode
+    @Binding var selectedKhisthi: Game.KhisthiMode
+    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.presentationMode) var presentationMode
+    
+    private var isDarkMode: Bool {
+        colorScheme == .dark
+    }
+    
+    private var cardBackgroundColor: Color {
+        isDarkMode ? Color(.secondarySystemBackground) : Color(.systemBackground)
+    }
+    
+    private var textColor: Color {
+        isDarkMode ? .white : .black
+    }
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Theme Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Appearance")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.jokerRed)
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Theme")
+                                .font(.headline)
+                                .foregroundColor(textColor)
+                            
+                            Picker("Theme", selection: $selectedTheme) {
+                                ForEach(AppTheme.allCases, id: \.self) { theme in
+                                    Text(theme.rawValue)
+                                        .tag(theme)
+                                        .foregroundColor(textColor)
+                                }
+                            }
+                            .pickerStyle(SegmentedPickerStyle())
+                            .background(cardBackgroundColor)
+                            .cornerRadius(8)
+                        }
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(cardBackgroundColor)
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    )
+                    
+                    // Game Mode Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Game Mode")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.jokerRed)
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Picker("Game Mode", selection: $selectedGameMode) {
+                                ForEach(Game.GameMode.allCases, id: \.self) { mode in
+                                    Text(mode.rawValue).tag(mode)
+                                }
+                            }
+                            .pickerStyle(SegmentedPickerStyle())
+                            
+                            Text(gameModeDescription)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .padding(.top, 4)
+                        }
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(cardBackgroundColor)
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    )
+                    
+                    // Khisthi Mode Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Khisthi Mode")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.jokerRed)
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Picker("Khisthi Mode", selection: $selectedKhisthi) {
+                                ForEach(Game.KhisthiMode.allCases, id: \.self) { mode in
+                                    Text(mode.rawValue).tag(mode)
+                                }
+                            }
+                            .pickerStyle(SegmentedPickerStyle())
+                            
+                            Text(khisthiModeDescription)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .padding(.top, 4)
+                        }
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(cardBackgroundColor)
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    )
+                    
+                    // Game Rules Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Game Rules")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.jokerRed)
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(gameRules)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(cardBackgroundColor)
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    )
+                }
+                .padding()
+            }
+            .navigationTitle("Settings")
+            .navigationBarItems(trailing: Button("Done") {
+                presentationMode.wrappedValue.dismiss()
+            })
+        }
+    }
+    
+    private var gameModeDescription: String {
+        switch selectedGameMode {
+        case .standard:
+            return "Standard mode: 8-9-8-9 card distribution"
+        case .nines:
+            return "All Nines mode: 4 rounds with 9 cards each"
+        }
+    }
+    
+    private var khisthiModeDescription: String {
+        switch selectedKhisthi {
+        case .speci:
+            return "Speci mode: Special scoring for khisthi"
+        case .fixed200:
+            return "Fixed -200: Standard khisthi penalty"
+        case .fixed500:
+            return "Fixed -500: Higher khisthi penalty"
+        }
+    }
+    
+    private var gameRules: String {
+        """
+        • Each round, players bid on how many tricks they'll take
+        • The dealer cannot bid the total number of cards
+        • Players must take exactly their bid to score points
+        • Taking more or fewer tricks than bid results in penalties
+        • The game ends after all rounds are complete
+        • Highest score wins!
+        """
+    }
 }
 
 struct GameView: View {
@@ -14,8 +241,36 @@ struct GameView: View {
     @State private var selectedRound = 1
     @State private var selectedPlayer: Game.Player?
     @State private var showingFinalScores = false
-    @State private var selectedGameMode: GameMode = .standard
-    @State private var selectedKhisthi: KhisthiMode = .speci
+    @State private var selectedGameMode: Game.GameMode = .standard
+    @State private var selectedKhisthi: Game.KhisthiMode = .speci
+    @State private var showSplash = true
+    @State private var selectedTheme: AppTheme = .system
+    @Environment(\.colorScheme) var colorScheme
+    @State private var showingSettings = false
+    
+    private var currentTheme: ColorScheme {
+        switch selectedTheme {
+        case .light: return .light
+        case .dark: return .dark
+        case .system: return colorScheme
+        }
+    }
+    
+    private var isDarkMode: Bool {
+        currentTheme == .dark
+    }
+    
+    private var backgroundColor: Color {
+        isDarkMode ? Color(.systemBackground) : Color(.systemBackground)
+    }
+    
+    private var cardBackgroundColor: Color {
+        isDarkMode ? Color(.secondarySystemBackground) : Color(.systemBackground)
+    }
+    
+    private var textColor: Color {
+        isDarkMode ? .white : .black
+    }
     
     private func formatScore(_ score: Int) -> String {
         if score == 0 {
@@ -26,17 +281,6 @@ struct GameView: View {
         let decimalPart = (absScore % 100) / 10
         let formattedScore = "\(wholePart).\(decimalPart)"
         return score < 0 ? "-\(formattedScore)" : formattedScore
-    }
-    
-    enum GameMode: String, CaseIterable {
-        case standard = "Standard (8-4-8-4)"
-        case nines = "All Nines (4x4)"
-    }
-    
-    enum KhisthiMode: String, CaseIterable {
-        case speci = "Speci (-100 per card)"
-        case fixed200 = "Fixed -200"
-        case fixed500 = "Fixed -500"
     }
     
     private var winner: Game.Player? {
@@ -247,140 +491,157 @@ struct GameView: View {
     }
     
     var body: some View {
-        NavigationView {
-            if !game.isGameSetup {
-                // Player Setup View
-                ScrollView {
-                    VStack(spacing: 20) {
-                        Text("Joker Game")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .padding(.top, 20)
-                        
-                        // Game Mode Selection
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Game Mode")
-                                .font(.headline)
-                            
-                            Picker("Game Mode", selection: $selectedGameMode) {
-                                ForEach(GameMode.allCases, id: \.self) { mode in
-                                    Text(mode.rawValue).tag(mode)
-                                }
-                            }
-                            .pickerStyle(SegmentedPickerStyle())
-                        }
-                        .padding(.horizontal)
-                        
-                        // Khisthi Mode Selection
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Khisthi Mode")
-                                .font(.headline)
-                            
-                            Picker("Khisthi Mode", selection: $selectedKhisthi) {
-                                ForEach(KhisthiMode.allCases, id: \.self) { mode in
-                                    Text(mode.rawValue).tag(mode)
-                                }
-                            }
-                            .pickerStyle(SegmentedPickerStyle())
-                        }
-                        .padding(.horizontal)
-                        
-                        ForEach(0..<4) { index in
-                            TextField("Player \(index + 1) Name", text: $playerNames[index])
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .padding(.horizontal)
-                        }
-                        
-                        Button(action: {
-                            for name in playerNames {
-                                if !name.isEmpty {
-                                    game.addPlayer(name: name)
-                                }
-                            }
-                            game.gameMode = selectedGameMode
-                            game.khisthiMode = selectedKhisthi
-                            game.startGame()
-                            showingGame = true
-                        }) {
-                            Text("Start Game")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color.blue)
-                                .cornerRadius(10)
-                        }
-                        .padding(.horizontal)
-                        .disabled(playerNames.contains(""))
-                    }
-                    .padding()
-                }
+        ZStack {
+            if showSplash {
+                SplashScreen(showSplash: $showSplash)
             } else {
-                // Main Game View
-                ZStack {
-                    ScrollView {
-                        VStack(spacing: 15) {
-                            // Round Info Card
-                            RoundInfoView(game: game)
-                                .padding(.horizontal)
-                            
-                            // Players Grid
-                            LazyVGrid(columns: [
-                                GridItem(.flexible()),
-                                GridItem(.flexible())
-                            ], spacing: 15) {
-                                ForEach(game.players) { player in
-                                    PlayerView(player: player, game: game)
-                                }
-                            }
-                            .padding(.horizontal)
-                            
-                            // Action Buttons
-                            VStack(spacing: 10) {
-                                if game.isRoundComplete {
-                                    Button(action: {
-                                        game.startRound()
-                                    }) {
-                                        Text("Next Round")
-                                            .font(.headline)
-                                            .foregroundColor(.white)
-                                            .frame(maxWidth: .infinity)
-                                            .padding()
-                                            .background(Color.blue)
-                                            .cornerRadius(10)
-                                    }
+                NavigationView {
+                    if !game.isGameSetup {
+                        // Player Setup View
+                        ScrollView {
+                            VStack(spacing: 20) {
+                                Text("Joker Game")
+                                    .font(.largeTitle)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.jokerRed)
+                                    .padding(.top, 20)
+                                
+                                ForEach(0..<4) { index in
+                                    TextField("Player \(index + 1) Name", text: $playerNames[index])
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .padding(.horizontal)
                                 }
                                 
                                 Button(action: {
-                                    showingFinalScores = true
+                                    for name in playerNames {
+                                        if !name.isEmpty {
+                                            game.addPlayer(name: name)
+                                        }
+                                    }
+                                    game.gameMode = selectedGameMode
+                                    game.khisthiMode = selectedKhisthi
+                                    game.startGame()
+                                    showingGame = true
                                 }) {
-                                    Text(game.isGameComplete ? "Show Final Scores" : "Return Home")
+                                    Text("Start Game")
                                         .font(.headline)
                                         .foregroundColor(.white)
-                                        .frame(maxWidth: .infinity)
                                         .padding()
-                                        .background(game.isGameComplete ? Color.green : Color.blue)
+                                        .frame(maxWidth: .infinity)
+                                        .background(Color.blue)
                                         .cornerRadius(10)
                                 }
+                                .padding(.horizontal)
+                                .disabled(playerNames.contains(""))
+                                
+                                Button(action: {
+                                    showingSettings = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "gear")
+                                        Text("Settings")
+                                    }
+                                    .font(.headline)
+                                    .foregroundColor(.jokerRed)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.jokerRed.opacity(0.1))
+                                    .cornerRadius(10)
+                                }
+                                .padding(.horizontal)
                             }
-                            .padding(.horizontal)
-                            .padding(.top, 10)
+                            .padding()
+                            .background(backgroundColor)
                         }
-                        .padding(.vertical)
-                        .padding(.bottom, availableNumbers.isEmpty ? 0 : 200) // Add padding for keyboard
-                    }
-                    
-                    if !availableNumbers.isEmpty {
-                        VStack {
-                            Spacer()
-                            numberKeyboard
-                                .padding()
+                        .preferredColorScheme(currentTheme)
+                        .background(backgroundColor)
+                        .sheet(isPresented: $showingSettings) {
+                            SettingsView(
+                                selectedTheme: $selectedTheme,
+                                selectedGameMode: $selectedGameMode,
+                                selectedKhisthi: $selectedKhisthi
+                            )
+                        }
+                    } else {
+                        // Main Game View
+                        ZStack {
+                            ScrollView {
+                                VStack(spacing: 15) {
+                                    // Round Info Card with gradient
+                                    RoundInfoView(game: game)
+                                        .padding(.horizontal)
+                                        .background(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [.jokerRed.opacity(0.1), .jokerGreen.opacity(0.1)]),
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                    
+                                    // Players Grid with animated cards
+                                    LazyVGrid(columns: [
+                                        GridItem(.flexible()),
+                                        GridItem(.flexible())
+                                    ], spacing: 15) {
+                                        ForEach(game.players) { player in
+                                            PlayerView(player: player, game: game)
+                                                .transition(.scale.combined(with: .opacity))
+                                                .animation(.spring(), value: player.currentBid)
+                                                .animation(.spring(), value: player.currentTricks)
+                                        }
+                                    }
+                                    .padding(.horizontal)
+                                    
+                                    // Action Buttons
+                                    VStack(spacing: 10) {
+                                        if game.isRoundComplete {
+                                            Button(action: {
+                                                game.startRound()
+                                            }) {
+                                                Text("Next Round")
+                                                    .font(.headline)
+                                                    .foregroundColor(.white)
+                                                    .frame(maxWidth: .infinity)
+                                                    .padding()
+                                                    .background(Color.blue)
+                                                    .cornerRadius(10)
+                                            }
+                                        }
+                                        
+                                        Button(action: {
+                                            showingFinalScores = true
+                                        }) {
+                                            Text(game.isGameComplete ? "Show Final Scores" : "Return Home")
+                                                .font(.headline)
+                                                .foregroundColor(.white)
+                                                .frame(maxWidth: .infinity)
+                                                .padding()
+                                                .background(game.isGameComplete ? Color.green : Color.blue)
+                                                .cornerRadius(10)
+                                        }
+                                    }
+                                    .padding(.horizontal)
+                                    .padding(.top, 10)
+                                }
+                                .padding(.vertical)
+                                .padding(.bottom, availableNumbers.isEmpty ? 0 : 200)
+                            }
+                            .preferredColorScheme(currentTheme)
+                            .background(backgroundColor)
+                            
+                            if !availableNumbers.isEmpty {
+                                VStack {
+                                    Spacer()
+                                    numberKeyboard
+                                        .padding()
+                                }
+                            }
+                        }
+                        .navigationTitle("Joker Game")
+                        .sheet(isPresented: $showingFinalScores) {
+                            finalScoresView
                         }
                     }
-                }
-                .navigationTitle("Joker Game")
-                .sheet(isPresented: $showingFinalScores) {
-                    finalScoresView
                 }
             }
         }
@@ -390,6 +651,19 @@ struct GameView: View {
 struct PlayerView: View {
     let player: Game.Player
     @ObservedObject var game: Game
+    @Environment(\.colorScheme) var colorScheme
+    
+    private var isDarkMode: Bool {
+        colorScheme == .dark
+    }
+    
+    private var cardBackgroundColor: Color {
+        isDarkMode ? Color(.secondarySystemBackground) : Color(.systemBackground)
+    }
+    
+    private var textColor: Color {
+        isDarkMode ? .white : .black
+    }
     
     private func formatScore(_ score: Int) -> String {
         if score == 0 {
@@ -436,18 +710,18 @@ struct PlayerView: View {
     
     var body: some View {
         VStack(spacing: 8) {
-            // Player Header
+            // Player Header with gradient background
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text(player.name)
                             .font(.headline)
-                            .foregroundColor(player.isDealer ? .blue : .primary)
+                            .foregroundColor(player.isDealer ? .jokerRed : .primary)
                         
                         if player.isDealer {
                             Text("(Dealer)")
                                 .font(.caption)
-                                .foregroundColor(.blue)
+                                .foregroundColor(.jokerRed)
                         }
                     }
                     
@@ -460,7 +734,7 @@ struct PlayerView: View {
                 
                 if isNextToBid || isNextToTake {
                     Circle()
-                        .fill(Color.blue)
+                        .fill(Color.jokerRed)
                         .frame(width: 8, height: 8)
                         .padding(.trailing, 4)
                 }
@@ -468,24 +742,26 @@ struct PlayerView: View {
             
             Divider()
             
-            // Status Section
+            // Status Section with animated colors
             VStack(spacing: 4) {
                 Text(bidStatus)
                     .font(.caption)
-                    .foregroundColor(isNextToBid ? .blue : .secondary)
+                    .foregroundColor(isNextToBid ? .jokerRed : .secondary)
                 
                 Text(takeStatus)
                     .font(.caption)
-                    .foregroundColor(isNextToTake ? .blue : .secondary)
+                    .foregroundColor(isNextToTake ? .jokerRed : .secondary)
             }
         }
         .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(radius: 2)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(cardBackgroundColor)
+                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+        )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(player.isDealer ? Color.blue : Color.clear, lineWidth: 2)
+                .stroke(player.isDealer ? Color.jokerRed : Color.clear, lineWidth: 2)
         )
     }
 }
@@ -710,6 +986,15 @@ struct TrickSheet: View {
 
 struct RoundInfoView: View {
     @ObservedObject var game: Game
+    @Environment(\.colorScheme) var colorScheme
+    
+    private var isDarkMode: Bool {
+        colorScheme == .dark
+    }
+    
+    private var cardBackgroundColor: Color {
+        isDarkMode ? Color(.secondarySystemBackground) : Color(.systemBackground)
+    }
     
     private var roundDescription: String {
         switch game.currentRound {
@@ -730,19 +1015,20 @@ struct RoundInfoView: View {
                 .font(.title3)
                 .fontWeight(.bold)
                 .multilineTextAlignment(.center)
+                .foregroundColor(.jokerRed)
             
             HStack(spacing: 15) {
                 if game.isBiddingComplete {
                     Label("Bidding Complete", systemImage: "checkmark.circle.fill")
-                        .foregroundColor(.green)
+                        .foregroundColor(.jokerGreen)
                 } else {
                     Label("Bidding Phase", systemImage: "circle.fill")
-                        .foregroundColor(.blue)
+                        .foregroundColor(.jokerRed)
                 }
                 
                 if game.isRoundComplete {
                     Label("Round Complete", systemImage: "checkmark.circle.fill")
-                        .foregroundColor(.green)
+                        .foregroundColor(.jokerGreen)
                 }
             }
             .font(.subheadline)
@@ -750,12 +1036,14 @@ struct RoundInfoView: View {
             if game.isGameComplete {
                 Text("Game Complete!")
                     .font(.headline)
-                    .foregroundColor(.green)
+                    .foregroundColor(.jokerGreen)
             }
         }
         .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(radius: 2)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(cardBackgroundColor)
+                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+        )
     }
 } 
