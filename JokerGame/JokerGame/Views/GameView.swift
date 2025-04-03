@@ -66,6 +66,7 @@ struct SettingsView: View {
     @Binding var selectedTheme: AppTheme
     @Binding var selectedGameMode: Game.GameMode
     @Binding var selectedKhisthi: Game.KhisthiMode
+    @ObservedObject var game: Game
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.presentationMode) var presentationMode
     
@@ -81,25 +82,74 @@ struct SettingsView: View {
         isDarkMode ? .white : .black
     }
     
+    private var gameModeDescription: String {
+        switch selectedGameMode {
+        case .standard:
+            return game.localizedString("standardModeDescription")
+        case .nines:
+            return game.localizedString("ninesModeDescription")
+        }
+    }
+    
+    private var khisthiModeDescription: String {
+        switch selectedKhisthi {
+        case .speci:
+            return game.localizedString("speciModeDescription")
+        case .fixed200:
+            return game.localizedString("fixed200ModeDescription")
+        case .fixed500:
+            return game.localizedString("fixed500ModeDescription")
+        }
+    }
+    
+    private var gameRules: String {
+        game.localizedString("gameRulesDescription")
+    }
+    
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
-                    // Theme Section
+                    // Language Section
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Appearance")
+                        Text(game.localizedString("language"))
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.jokerRed)
                         
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Theme")
+                            Picker("Language", selection: $game.selectedLanguage) {
+                                ForEach(Game.Language.allCases, id: \.self) { language in
+                                    Text(language.rawValue).tag(language)
+                                }
+                            }
+                            .pickerStyle(SegmentedPickerStyle())
+                            .background(cardBackgroundColor)
+                            .cornerRadius(8)
+                        }
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(cardBackgroundColor)
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    )
+                    
+                    // Theme Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(game.localizedString("appearance"))
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.jokerRed)
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(game.localizedString("theme"))
                                 .font(.headline)
                                 .foregroundColor(textColor)
                             
                             Picker("Theme", selection: $selectedTheme) {
                                 ForEach(AppTheme.allCases, id: \.self) { theme in
-                                    Text(theme.rawValue)
+                                    Text(game.localizedString(theme.rawValue.lowercased()))
                                         .tag(theme)
                                         .foregroundColor(textColor)
                                 }
@@ -118,7 +168,7 @@ struct SettingsView: View {
                     
                     // Game Mode Section
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Game Mode")
+                        Text(game.localizedString("gameMode"))
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.jokerRed)
@@ -126,12 +176,13 @@ struct SettingsView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Picker("Game Mode", selection: $selectedGameMode) {
                                 ForEach(Game.GameMode.allCases, id: \.self) { mode in
-                                    Text(mode.rawValue).tag(mode)
+                                    Text(game.localizedString(mode.rawValue))
+                                        .tag(mode)
                                 }
                             }
                             .pickerStyle(SegmentedPickerStyle())
                             
-                            Text(gameModeDescription)
+                            Text(game.getGameModeDescription(selectedGameMode))
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                                 .padding(.top, 4)
@@ -146,7 +197,7 @@ struct SettingsView: View {
                     
                     // Khisthi Mode Section
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Khisthi Mode")
+                        Text(game.localizedString("khisthiMode"))
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.jokerRed)
@@ -154,7 +205,8 @@ struct SettingsView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Picker("Khisthi Mode", selection: $selectedKhisthi) {
                                 ForEach(Game.KhisthiMode.allCases, id: \.self) { mode in
-                                    Text(mode.rawValue).tag(mode)
+                                    Text(game.localizedString(mode.rawValue.lowercased()))
+                                        .tag(mode)
                                 }
                             }
                             .pickerStyle(SegmentedPickerStyle())
@@ -174,7 +226,7 @@ struct SettingsView: View {
                     
                     // Game Rules Section
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Game Rules")
+                        Text(game.localizedString("gameRules"))
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.jokerRed)
@@ -194,42 +246,11 @@ struct SettingsView: View {
                 }
                 .padding()
             }
-            .navigationTitle("Settings")
-            .navigationBarItems(trailing: Button("Done") {
+            .navigationTitle(game.localizedString("settings"))
+            .navigationBarItems(trailing: Button(game.localizedString("done")) {
                 presentationMode.wrappedValue.dismiss()
             })
         }
-    }
-    
-    private var gameModeDescription: String {
-        switch selectedGameMode {
-        case .standard:
-            return "Standard mode: 8-9-8-9 card distribution"
-        case .nines:
-            return "All Nines mode: 4 rounds with 9 cards each"
-        }
-    }
-    
-    private var khisthiModeDescription: String {
-        switch selectedKhisthi {
-        case .speci:
-            return "Speci mode: Special scoring for khisthi"
-        case .fixed200:
-            return "Fixed -200: Standard khisthi penalty"
-        case .fixed500:
-            return "Fixed -500: Higher khisthi penalty"
-        }
-    }
-    
-    private var gameRules: String {
-        """
-        • Each round, players bid on how many tricks they'll take
-        • The dealer cannot bid the total number of cards
-        • Players must take exactly their bid to score points
-        • Taking more or fewer tricks than bid results in penalties
-        • The game ends after all rounds are complete
-        • Highest score wins!
-        """
     }
 }
 
@@ -360,7 +381,7 @@ struct GameView: View {
     
     private var numberKeyboard: some View {
         VStack(spacing: 0) {
-            Text(inputTitle)
+            Text("\(currentPlayer?.name ?? "")'s \(game.isBiddingComplete ? game.localizedString("tricks") : game.localizedString("bid"))")
                 .font(.headline)
                 .padding(.vertical, 8)
             
@@ -397,7 +418,7 @@ struct GameView: View {
     
     private var finalScoresView: some View {
         VStack(spacing: 15) {
-            Text(game.isGameComplete ? "Final Scores" : "Current Scores")
+            Text(game.isGameComplete ? game.localizedString("finalScores") : game.localizedString("currentScores"))
                 .font(.title)
                 .fontWeight(.bold)
                 .foregroundColor(.blue)
@@ -423,7 +444,7 @@ struct GameView: View {
             }
             
             if !game.isGameComplete {
-                Text("Game Incomplete - \(game.currentRound) rounds played")
+                Text("\(game.localizedString("gameIncomplete")) - \(game.currentRound) \(game.localizedString("roundsPlayed"))")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .padding(.top)
@@ -433,7 +454,7 @@ struct GameView: View {
                 showingFinalScores = false
                 game.resetGame()
             }) {
-                Text("Return Home")
+                Text(game.localizedString("returnHome"))
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
@@ -451,7 +472,7 @@ struct GameView: View {
     
     private var roundScoresView: some View {
         VStack(spacing: 15) {
-            Text("Round \(selectedRound) Scores")
+            Text("\(game.localizedString("round")) \(selectedRound) \(game.localizedString("scores"))")
                 .font(.title)
                 .fontWeight(.bold)
                 .foregroundColor(.blue)
@@ -474,7 +495,7 @@ struct GameView: View {
             Button(action: {
                 showingRoundScores = false
             }) {
-                Text("Done")
+                Text(game.localizedString("done"))
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
@@ -507,7 +528,7 @@ struct GameView: View {
                                     .padding(.top, 20)
                                 
                                 ForEach(0..<4) { index in
-                                    TextField("Player \(index + 1) Name", text: $playerNames[index])
+                                    TextField("\(game.localizedString("player")) \(index + 1)", text: $playerNames[index])
                                         .textFieldStyle(RoundedBorderTextFieldStyle())
                                         .padding(.horizontal)
                                 }
@@ -523,7 +544,7 @@ struct GameView: View {
                                     game.startGame()
                                     showingGame = true
                                 }) {
-                                    Text("Start Game")
+                                    Text(game.localizedString("startGame"))
                                         .font(.headline)
                                         .foregroundColor(.white)
                                         .padding()
@@ -539,7 +560,7 @@ struct GameView: View {
                                 }) {
                                     HStack {
                                         Image(systemName: "gear")
-                                        Text("Settings")
+                                        Text(game.localizedString("settings"))
                                     }
                                     .font(.headline)
                                     .foregroundColor(.jokerRed)
@@ -559,7 +580,8 @@ struct GameView: View {
                             SettingsView(
                                 selectedTheme: $selectedTheme,
                                 selectedGameMode: $selectedGameMode,
-                                selectedKhisthi: $selectedKhisthi
+                                selectedKhisthi: $selectedKhisthi,
+                                game: game
                             )
                         }
                     } else {
@@ -598,7 +620,7 @@ struct GameView: View {
                                             Button(action: {
                                                 game.startRound()
                                             }) {
-                                                Text("Next Round")
+                                                Text(game.localizedString("nextRound"))
                                                     .font(.headline)
                                                     .foregroundColor(.white)
                                                     .frame(maxWidth: .infinity)
@@ -611,7 +633,7 @@ struct GameView: View {
                                         Button(action: {
                                             showingFinalScores = true
                                         }) {
-                                            Text(game.isGameComplete ? "Show Final Scores" : "Return Home")
+                                            Text(game.isGameComplete ? game.localizedString("showFinalScores") : game.localizedString("returnHome"))
                                                 .font(.headline)
                                                 .foregroundColor(.white)
                                                 .frame(maxWidth: .infinity)
@@ -688,23 +710,23 @@ struct PlayerView: View {
     
     var bidStatus: String {
         if game.isBiddingComplete {
-            return "Bid: \(player.currentBid == -1 ? "Not set" : String(player.currentBid))"
+            return "\(game.localizedString("bid")): \(player.currentBid == -1 ? "Not set" : String(player.currentBid))"
         } else if isNextToBid {
-            return "Your turn to bid"
+            return game.localizedString("yourTurnToBid")
         } else if player.currentBid != -1 {
-            return "Bid: \(player.currentBid)"
+            return "\(game.localizedString("bid")): \(player.currentBid)"
         } else {
-            return "Waiting to bid"
+            return game.localizedString("waitingToBid")
         }
     }
     
     var takeStatus: String {
         if player.currentTricks != -1 {
-            return "Took: \(player.currentTricks)"
+            return "\(game.localizedString("tricks")): \(player.currentTricks)"
         } else if isNextToTake {
-            return "Your turn to take"
+            return game.localizedString("yourTurnToTake")
         } else {
-            return "Waiting to take"
+            return game.localizedString("waitingToTake")
         }
     }
     
@@ -719,13 +741,13 @@ struct PlayerView: View {
                             .foregroundColor(player.isDealer ? .jokerRed : .primary)
                         
                         if player.isDealer {
-                            Text("(Dealer)")
+                            Text("(\(game.localizedString("dealer")))")
                                 .font(.caption)
                                 .foregroundColor(.jokerRed)
                         }
                     }
                     
-                    Text("Score: \(formatScore(player.score))")
+                    Text("\(game.localizedString("score")): \(formatScore(player.score))")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -999,13 +1021,13 @@ struct RoundInfoView: View {
     private var roundDescription: String {
         switch game.currentRound {
         case 1...8:
-            return "Round \(game.currentRound): \(game.currentRound) cards"
+            return "\(game.localizedString("round")) \(game.currentRound): \(game.currentRound) \(game.localizedString("cards"))"
         case 9...12:
-            return "Round \(game.currentRound): Nines (9 cards)"
+            return "\(game.localizedString("round")) \(game.currentRound): \(game.localizedString("nines"))"
         case 13...20:
-            return "Round \(game.currentRound): \(21 - game.currentRound) cards"
+            return "\(game.localizedString("round")) \(game.currentRound): \(21 - game.currentRound) \(game.localizedString("cards"))"
         default:
-            return "Round \(game.currentRound)"
+            return "\(game.localizedString("round")) \(game.currentRound)"
         }
     }
     
@@ -1019,22 +1041,22 @@ struct RoundInfoView: View {
             
             HStack(spacing: 15) {
                 if game.isBiddingComplete {
-                    Label("Bidding Complete", systemImage: "checkmark.circle.fill")
+                    Label(game.localizedString("biddingComplete"), systemImage: "checkmark.circle.fill")
                         .foregroundColor(.jokerGreen)
                 } else {
-                    Label("Bidding Phase", systemImage: "circle.fill")
+                    Label(game.localizedString("biddingPhase"), systemImage: "circle.fill")
                         .foregroundColor(.jokerRed)
                 }
                 
                 if game.isRoundComplete {
-                    Label("Round Complete", systemImage: "checkmark.circle.fill")
+                    Label(game.localizedString("roundComplete"), systemImage: "checkmark.circle.fill")
                         .foregroundColor(.jokerGreen)
                 }
             }
             .font(.subheadline)
             
             if game.isGameComplete {
-                Text("Game Complete!")
+                Text(game.localizedString("gameComplete"))
                     .font(.headline)
                     .foregroundColor(.jokerGreen)
             }

@@ -1,9 +1,139 @@
 import Foundation
 
 class Game: ObservableObject {
+    enum Language: String, CaseIterable {
+        case english = "English"
+        case georgian = "ქართული"
+    }
+    
+    @Published var selectedLanguage: Language = .english
+    
+    // Localized strings
+    var localizedStrings: [String: String] {
+        switch selectedLanguage {
+        case .english:
+            return [
+                "player": "Player",
+                "dealer": "Dealer",
+                "bid": "Bid",
+                "tricks": "Tricks",
+                "score": "Score",
+                "nextRound": "Next Round",
+                "yourTurnToBid": "Your turn to bid",
+                "waitingToBid": "Waiting to bid",
+                "yourTurnToTake": "Your turn to take",
+                "waitingToTake": "Waiting to take",
+                "biddingComplete": "Bidding Complete",
+                "biddingPhase": "Bidding Phase",
+                "roundComplete": "Round Complete",
+                "gameComplete": "Game Complete",
+                "round": "Round",
+                "cards": "cards",
+                "nines": "Nines",
+                "startGame": "Start Game",
+                "settings": "Settings",
+                "appearance": "Appearance",
+                "theme": "Theme",
+                "language": "Language",
+                "gameMode": "Game Mode",
+                "khisthiMode": "Khisthi Mode",
+                "gameRules": "Game Rules",
+                "done": "Done",
+                "cancel": "Cancel",
+                "returnHome": "Return Home",
+                "showFinalScores": "Show Final Scores",
+                "currentScores": "Current Scores",
+                "finalScores": "Final Scores",
+                "gameIncomplete": "Game Incomplete",
+                "roundsPlayed": "rounds played",
+                "light": "Light",
+                "dark": "Dark",
+                "system": "System",
+                "standard": "Standard",
+                "standardModeDescription": "Standard mode: 8-9-8-9 card distribution",
+                "ninesModeDescription": "All Nines mode: 4 rounds with 9 cards each",
+                "speci": "Speci",
+                "fixed200": "Fixed -200",
+                "fixed500": "Fixed -500",
+                "speciModeDescription": "Speci mode: Special scoring for khisthi",
+                "fixed200ModeDescription": "Fixed -200: Standard khisthi penalty",
+                "fixed500ModeDescription": "Fixed -500: Higher khisthi penalty",
+                "gameRulesDescription": """
+                • Each round, players bid on how many tricks they'll take
+                • The dealer cannot bid the total number of cards
+                • Players must take exactly their bid to score points
+                • Taking more or fewer tricks than bid results in penalties
+                • The game ends after all rounds are complete
+                • Highest score wins!
+                """
+            ]
+        case .georgian:
+            return [
+                "player": "მოთამაშე",
+                "dealer": "დამრიგებელი",
+                "bid": "ნათქვამი",
+                "tricks": "წაღებები",
+                "score": "ქულა",
+                "nextRound": "შემდეგი რაუნდი",
+                "yourTurnToBid": "თქვიიიიიი",
+                "waitingToBid": "აცადეე თქვაას",
+                "yourTurnToTake": "რამდენი წაიღეე",
+                "waitingToTake": "აცადე თქვას რა წაიღო",
+                "biddingComplete": "შეთავაზება დასრულებულია",
+                "biddingPhase": "შეთავაზების ფაზა",
+                "roundComplete": "რაუნდი დასრულებულია",
+                "gameComplete": "თამაში დასრულებულია",
+                "round": "რაუნდი",
+                "cards": "ბარათი",
+                "nines": "ცხრები",
+                "startGame": "თამაშის დაწყება",
+                "settings": "პარამეტრები",
+                "appearance": "გარეგნობა",
+                "theme": "თემა",
+                "language": "ენა",
+                "gameMode": "თამაშის რეჟიმი",
+                "khisthiMode": "ხიშტის რეჟიმი",
+                "gameRules": "თამაშის წესები",
+                "done": "მზადაა",
+                "cancel": "გაუქმება",
+                "returnHome": "მთავარი გვერდი",
+                "showFinalScores": "ფინალური ქულების ჩვენება",
+                "currentScores": "მიმდინარე ქულები",
+                "finalScores": "ფინალური ქულები",
+                "gameIncomplete": "თამაში დაუსრულებელია",
+                "roundsPlayed": "ჩატარებული რაუნდი",
+                "light": "ღია",
+                "dark": "მუქი",
+                "system": "სისტემა",
+                "standard": "სტანდარტული",
+                "standardModeDescription": "სტანდარტული რეჟიმი: 8-9-8-9 ბარათის განაწილება",
+                "ninesModeDescription": "ცხრების რეჟიმი: 4 რაუნდი თითო 9 ბარათით",
+                "speci": "სპეცი",
+                "fixed200": " -200",
+                "fixed500": " -500",
+                "speciModeDescription": "სპეცი რეჟიმი: სპეციალური ქულების დათვლა ქიშტისთვის",
+                "fixed200ModeDescription": "ფიქსირებული -200: სტანდარტული ქიშტის ჯარიმა",
+                "fixed500ModeDescription": "ფიქსირებული -500: მაღალი ქიშტის ჯარიმა",
+                "gameRulesDescription": """
+                • ყოველ რაუნდში მოთამაშეები აცხადებენ რამდენ შემტაცებელს აიღებენ
+                • დილერს არ შეუძლია ბარათების რაოდენობის ტოლი შეთავაზების გაკეთება
+                • მოთამაშეებმა ზუსტად უნდა აიღონ შეთავაზებული რაოდენობის შემტაცებელი
+                • მეტის ან ნაკლების აღება იწვევს ჯარიმას
+                • თამაში მთავრდება ყველა რაუნდის დასრულების შემდეგ
+                • მაღალი ქულა იმარჯვებს!
+                """
+            ]
+        }
+    }
+    
+    // Helper function to get localized string
+    func localizedString(_ key: String) -> String {
+        return localizedStrings[key] ?? key
+    }
+    
     enum GameMode: String, CaseIterable {
-        case standard = "Standard (8-9-8-9)"
-        case nines = "All Nines (4x4)"
+        case standard = "standard"
+        case nines = "nines"
     }
     
     enum KhisthiMode: String, CaseIterable {
@@ -325,5 +455,15 @@ class Game: ObservableObject {
         }
         
         return nil
+    }
+    
+    // Localized strings for game mode descriptions
+    func getGameModeDescription(_ mode: GameMode) -> String {
+        switch mode {
+        case .standard:
+            return localizedString("standardModeDescription")
+        case .nines:
+            return localizedString("ninesModeDescription")
+        }
     }
 } 
