@@ -153,11 +153,20 @@ class Game: ObservableObject {
     func calculateScore(for player: Player) -> Int {
         let bid = player.currentBid
         let tricks = player.currentTricks
+        let cardsDealt = cardsInRound()
         
         if bid == tricks {
-            return bid * 10
+            if bid == 0 {
+                return 50  // Special case for bid 0, take 0
+            } else {
+                // If bid matches both tricks and cards dealt, give 100 points per card
+                if bid == cardsDealt {
+                    return bid * 100  // 100 for bid 1, 200 for bid 2, 300 for bid 3, etc.
+                } else {
+                    return 50 + (bid * 50)  // 100 for bid 1, 150 for bid 2, 200 for bid 3, etc.
+                }
+            }
         } else {
-            let difference = abs(bid - tricks)
             let isKhisthi = bid > 0 && tricks == 0
             
             if isKhisthi {
@@ -170,7 +179,8 @@ class Game: ObservableObject {
                     return -500
                 }
             } else {
-                return -difference * 10
+                let difference = abs(bid - tricks)
+                return difference * 10  // 10 points per difference
             }
         }
     }

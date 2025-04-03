@@ -17,6 +17,17 @@ struct GameView: View {
     @State private var selectedGameMode: GameMode = .standard
     @State private var selectedKhisthi: KhisthiMode = .speci
     
+    private func formatScore(_ score: Int) -> String {
+        if score == 0 {
+            return "0.0"
+        }
+        let absScore = abs(score)
+        let wholePart = absScore / 100
+        let decimalPart = (absScore % 100) / 10
+        let formattedScore = "\(wholePart).\(decimalPart)"
+        return score < 0 ? "-\(formattedScore)" : formattedScore
+    }
+    
     enum GameMode: String, CaseIterable {
         case standard = "Standard (8-4-8-4)"
         case nines = "All Nines (4x4)"
@@ -152,7 +163,7 @@ struct GameView: View {
                     Text(player.name)
                         .font(.headline)
                     Spacer()
-                    Text("\(player.score)")
+                    Text(formatScore(player.score))
                         .font(.title2)
                         .foregroundColor(player.id == winner?.id ? .green : .primary)
                 }
@@ -179,6 +190,47 @@ struct GameView: View {
                 game.resetGame()
             }) {
                 Text("Return Home")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(10)
+            }
+            .padding(.top, 20)
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(15)
+        .shadow(radius: 5)
+    }
+    
+    private var roundScoresView: some View {
+        VStack(spacing: 15) {
+            Text("Round \(selectedRound) Scores")
+                .font(.title)
+                .fontWeight(.bold)
+                .foregroundColor(.blue)
+            
+            if let scores = game.getRoundScores(round: selectedRound) {
+                ForEach(Array(zip(game.players.indices, scores)), id: \.0) { index, score in
+                    HStack {
+                        Text(game.players[index].name)
+                            .font(.headline)
+                        Spacer()
+                        Text(formatScore(score))
+                            .font(.title2)
+                    }
+                    .padding()
+                    .background(Color(.systemBackground))
+                    .cornerRadius(10)
+                }
+            }
+            
+            Button(action: {
+                showingRoundScores = false
+            }) {
+                Text("Done")
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
@@ -339,6 +391,17 @@ struct PlayerView: View {
     let player: Game.Player
     @ObservedObject var game: Game
     
+    private func formatScore(_ score: Int) -> String {
+        if score == 0 {
+            return "0.0"
+        }
+        let absScore = abs(score)
+        let wholePart = absScore / 100
+        let decimalPart = (absScore % 100) / 10
+        let formattedScore = "\(wholePart).\(decimalPart)"
+        return score < 0 ? "-\(formattedScore)" : formattedScore
+    }
+    
     var isNextToBid: Bool {
         guard let nextBidder = game.getNextBidder() else { return false }
         return nextBidder.id == player.id
@@ -388,7 +451,7 @@ struct PlayerView: View {
                         }
                     }
                     
-                    Text("Score: \(player.score)")
+                    Text("Score: \(formatScore(player.score))")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
