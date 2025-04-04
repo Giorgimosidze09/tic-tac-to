@@ -701,8 +701,8 @@ struct GameView: View {
     private var numberKeyboard: some View {
         VStack(spacing: 0) {
             Text("\(currentPlayer?.name ?? "")'s \(game.isBiddingComplete ? game.localizedString("tricks") : game.localizedString("bid"))")
-                .font(.headline)
-                .padding(.vertical, 8)
+                .font(.caption)
+                .padding(.vertical, 2)
             
             LazyVGrid(columns: [
                 GridItem(.flexible()),
@@ -719,11 +719,11 @@ struct GameView: View {
                         }
                     }) {
                         Text("\(number)")
-                            .font(.title)
-                            .fontWeight(.bold)
+                            .font(.caption)
+                            .fontWeight(.medium)
                             .foregroundColor(isValid ? .white : .gray)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 60)
+                            .frame(height: 30)
                             .background(isValid ? Color.blue : Color.gray.opacity(0.3))
                     }
                     .disabled(!isValid)
@@ -731,10 +731,10 @@ struct GameView: View {
             }
         }
         .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(radius: 2)
+        .cornerRadius(6)
+        .shadow(radius: 1)
         .frame(maxWidth: .infinity)
-        .padding(.horizontal)
+        .padding(.horizontal, 4)
     }
     
     private var finalScoresView: some View {
@@ -1541,45 +1541,6 @@ struct StandardGameView: View {
         return bid + otherPlayersBids != game.cardsInRound()
     }
     
-    private var numberKeyboard: some View {
-        VStack(spacing: 0) {
-            Text("\(currentPlayer?.name ?? "")'s \(game.isBiddingComplete ? game.localizedString("tricks") : game.localizedString("bid"))")
-                .font(.headline)
-                .padding(.vertical, 8)
-            
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 0) {
-                ForEach(availableNumbers, id: \.self) { number in
-                    let isValid = !game.isBiddingComplete && currentPlayer?.isDealer == true ? 
-                        isBidValid(number) : true
-                    
-                    Button(action: { 
-                        if isValid {
-                            handleNumberSelection(number)
-                        }
-                    }) {
-                        Text("\(number)")
-                            .font(.title)
-                            .fontWeight(.bold)
-                            .foregroundColor(isValid ? .white : .gray)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 60)
-                            .background(isValid ? Color.blue : Color.gray.opacity(0.3))
-                    }
-                    .disabled(!isValid)
-                }
-            }
-        }
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(radius: 2)
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal)
-    }
-    
     private func handleNumberSelection(_ number: Int) {
         guard let player = currentPlayer else { return }
         if !game.isBiddingComplete && player.currentBid == -1 {
@@ -1598,17 +1559,56 @@ struct StandardGameView: View {
         }
     }
     
+    private var numberKeyboard: some View {
+        VStack(spacing: 0) {
+            Text("\(currentPlayer?.name ?? "")'s \(game.isBiddingComplete ? game.localizedString("tricks") : game.localizedString("bid"))")
+                .font(.caption)
+                .padding(.vertical, 2)
+            
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 0) {
+                ForEach(availableNumbers, id: \.self) { number in
+                    let isValid = !game.isBiddingComplete && currentPlayer?.isDealer == true ? 
+                        isBidValid(number) : true
+                    
+                    Button(action: { 
+                        if isValid {
+                            handleNumberSelection(number)
+                        }
+                    }) {
+                        Text("\(number)")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(isValid ? .white : .gray)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 30)
+                            .background(isValid ? Color.blue : Color.gray.opacity(0.3))
+                    }
+                    .disabled(!isValid)
+                }
+            }
+        }
+        .background(Color(.systemBackground))
+        .cornerRadius(6)
+        .shadow(radius: 1)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 4)
+    }
+    
     var body: some View {
         GeometryReader { geometry in
-            HStack(spacing: 0) {
-                // Left side - Game Table
-                ScrollView(.horizontal) {
-                    VStack(spacing: 15) {
+            VStack(spacing: 0) {
+                // Top section - Game Table
+                ScrollView {
+                    VStack(spacing: 10) {
                         // Round Info and Table
-                        HStack(spacing: 20) {
+                        VStack(spacing: 8) {
                             // Round Info
                             RoundInfoView(game: game)
-                                .frame(width: 200)
+                                .frame(maxWidth: .infinity)
                             
                             // Game Table
                             VStack(spacing: 0) {
@@ -1616,14 +1616,13 @@ struct StandardGameView: View {
                                 HStack(spacing: 0) {
                                     Text("")
                                         .frame(width: 40)
-                                        .padding(6)
+                                        .padding(8)
                                         .border(gridColor)
                                     
                                     ForEach(game.players) { player in
                                         VStack {
                                             Text(player.name)
-                                                .font(.caption)
-                                                .fontWeight(.bold)
+                                                .font(.system(size: 14, weight: .bold))
                                                 .foregroundColor(player.isDealer ? .jokerRed : .primary)
                                             if player.isDealer {
                                                 Text("D")
@@ -1631,8 +1630,8 @@ struct StandardGameView: View {
                                                     .foregroundColor(.jokerRed)
                                             }
                                         }
-                                        .frame(width: 80)
-                                        .padding(6)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(8)
                                         .border(gridColor)
                                     }
                                 }
@@ -1641,26 +1640,34 @@ struct StandardGameView: View {
                                 ForEach(0..<game.currentRound, id: \.self) { round in
                                     HStack(spacing: 0) {
                                         Text("\(round + 1)")
-                                            .font(.caption)
-                                            .frame(width: 40)
-                                            .padding(6)
+                                            .font(.system(size: 12))
+                                            .frame(width: 30)
+                                            .padding(4)
                                             .border(gridColor)
                                         
                                         ForEach(game.players) { player in
                                             let roundData = game.getRoundBidsAndTakes(round: round + 1)
                                             let playerData = roundData.first(where: { $0.player.id == player.id })
                                             
-                                            VStack(spacing: 4) {
-                                                if let data = playerData {
-                                                    Text("\(data.bid)")
-                                                        .font(.caption)
-                                                    Text("\(data.tricks)")
-                                                        .font(.caption)
+                                            VStack(spacing: 2) {
+                                                if round + 1 == game.currentRound {
+                                                    // For current round, show real-time bid/take
+                                                    Text(player.currentBid == -1 ? "-" : "\(player.currentBid)")
+                                                        .font(.system(size: 12))
+                                                    Text(player.currentTricks == -1 ? "-" : "\(player.currentTricks)")
+                                                        .font(.system(size: 12))
+                                                        .foregroundColor(.secondary)
+                                                } else {
+                                                    // For previous rounds
+                                                    Text("\(playerData?.bid ?? -1)")
+                                                        .font(.system(size: 12))
+                                                    Text("\(playerData?.tricks ?? -1)")
+                                                        .font(.system(size: 12))
                                                         .foregroundColor(.secondary)
                                                 }
                                             }
-                                            .frame(width: 80)
-                                            .padding(6)
+                                            .frame(maxWidth: .infinity)
+                                            .padding(4)
                                             .background(cellBackgroundColor(row: game.players.firstIndex(where: { $0.id == player.id }) ?? 0, column: round))
                                             .border(gridColor)
                                         }
@@ -1670,16 +1677,16 @@ struct StandardGameView: View {
                                 // Score Row
                                 HStack(spacing: 0) {
                                     Text("Score")
-                                        .font(.caption)
+                                        .font(.system(size: 14, weight: .bold))
                                         .frame(width: 40)
-                                        .padding(6)
+                                        .padding(8)
                                         .border(gridColor)
                                     
                                     ForEach(game.players) { player in
                                         Text(formatScore(player.score))
-                                            .font(.caption)
-                                            .frame(width: 80)
-                                            .padding(6)
+                                            .font(.system(size: 14, weight: .bold))
+                                            .frame(maxWidth: .infinity)
+                                            .padding(8)
                                             .border(gridColor)
                                     }
                                 }
@@ -1687,27 +1694,28 @@ struct StandardGameView: View {
                             .background(cardBackgroundColor)
                             .cornerRadius(12)
                         }
-                        .padding(.horizontal)
+                        .padding(.horizontal, 8)
                     }
-                    .padding(.vertical)
+                    .padding(.vertical, 8)
                 }
-                .frame(width: geometry.size.width * 0.75)
                 
-                // Right side - Controls
-                VStack {
-                    // Action Buttons at the top
-                    VStack(spacing: 10) {
+                Spacer()
+                
+                // Bottom section - Controls and Keyboard
+                VStack(spacing: 8) {
+                    // Action Buttons in a horizontal row
+                    HStack(spacing: 8) {
                         if game.isRoundComplete {
                             Button(action: {
                                 game.startRound()
                             }) {
                                 Text(game.localizedString("nextRound"))
-                                    .font(.headline)
+                                    .font(.subheadline)
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
-                                    .padding()
+                                    .padding(.vertical, 8)
                                     .background(Color.blue)
-                                    .cornerRadius(10)
+                                    .cornerRadius(8)
                             }
                         }
                         
@@ -1715,41 +1723,38 @@ struct StandardGameView: View {
                             showingUndoView = true
                         }) {
                             Text(game.localizedString("undo"))
-                                .font(.headline)
+                                .font(.subheadline)
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
-                                .padding()
+                                .padding(.vertical, 8)
                                 .background(Color.orange)
-                                .cornerRadius(10)
+                                .cornerRadius(8)
                         }
                         
                         Button(action: {
                             showingFinalScores = true
                         }) {
                             Text(game.isGameComplete ? game.localizedString("showFinalScores") : game.localizedString("returnHome"))
-                                .font(.headline)
+                                .font(.subheadline)
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
-                                .padding()
+                                .padding(.vertical, 8)
                                 .background(game.isGameComplete ? Color.green : Color.blue)
-                                .cornerRadius(10)
+                                .cornerRadius(8)
                         }
                     }
-                    .padding()
-                    
-                    Spacer()
+                    .padding(.horizontal, 8)
                     
                     // Keyboard at the bottom
                     if !availableNumbers.isEmpty {
                         numberKeyboard
-                            .padding(.bottom)
+                            .frame(maxHeight: geometry.size.height * 0.25)
                     }
                 }
-                .frame(width: geometry.size.width * 0.25)
+                .padding(.bottom, 8)
                 .background(cardBackgroundColor)
             }
         }
         .ignoresSafeArea(.keyboard)
-        .forceLandscape()
     }
 } 
