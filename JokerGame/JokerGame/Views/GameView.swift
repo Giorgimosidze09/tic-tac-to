@@ -1639,7 +1639,21 @@ struct StandardGameView: View {
                                 // Bid Rows
                                 ForEach(0..<game.currentRound, id: \.self) { round in
                                     HStack(spacing: 0) {
-                                        Text("\(round + 1)")
+                                        // Round number display logic
+                                        let roundNumber = round + 1
+                                        let displayNumber: String = {
+                                            if roundNumber <= 8 {
+                                                return "\(roundNumber)"  // Rounds 1-8: show actual round number
+                                            } else if (roundNumber >= 9 && roundNumber <= 12) || (roundNumber >= 21 && roundNumber <= 24) {
+                                                return "9"  // Both sets of nine rounds: show "9"
+                                            } else if roundNumber >= 13 && roundNumber <= 20 {
+                                                return "\(21 - roundNumber)"  // Rounds 13-20: show decreasing cards
+                                            } else {
+                                                return "\(roundNumber)"  // Fallback for any other rounds
+                                            }
+                                        }()
+                                        
+                                        Text(displayNumber)
                                             .font(.system(size: 12))
                                             .frame(width: 30)
                                             .padding(4)
