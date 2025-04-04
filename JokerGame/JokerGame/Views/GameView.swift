@@ -497,6 +497,7 @@ struct GameView: View {
     @State private var showingSettings = false
     @State private var lastSystemTheme: ColorScheme?
     @State private var showingUndoView = false
+    @State private var keyboardHeight: CGFloat = 0
     
     private var currentTheme: ColorScheme {
         if let theme = selectedTheme.colorScheme {
@@ -642,6 +643,8 @@ struct GameView: View {
         .background(Color(.systemBackground))
         .cornerRadius(12)
         .shadow(radius: 2)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal)
     }
     
     private var finalScoresView: some View {
@@ -884,19 +887,23 @@ struct GameView: View {
                                     }
                                     .padding(.horizontal)
                                     .padding(.top, 10)
+                                    .padding(.bottom, 20)
                                 }
                                 .padding(.vertical)
-                                .padding(.bottom, availableNumbers.isEmpty ? 0 : 200)
+                                .padding(.bottom, !availableNumbers.isEmpty ? 300 : 0)
                             }
                             .preferredColorScheme(currentTheme)
                             .background(backgroundColor)
                             
+                            // Keyboard overlay
                             if !availableNumbers.isEmpty {
                                 VStack {
                                     Spacer()
                                     numberKeyboard
-                                        .padding()
+                                        .padding(.bottom, 20)
                                 }
+                                .frame(maxHeight: .infinity, alignment: .bottom)
+                                .ignoresSafeArea(.keyboard)
                             }
                         }
                         .navigationTitle("Joker Game")
