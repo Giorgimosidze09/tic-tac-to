@@ -371,6 +371,8 @@ struct UndoView: View {
     @Environment(\.presentationMode) var presentationMode
     @State private var selectedRound: Int
     @State private var playerUpdates: [UUID: (bid: Int?, tricks: Int?)] = [:]
+    @State private var errorMessage: String? = nil
+    @State private var showingError = false
     
     init(game: Game) {
         self.game = game
@@ -385,7 +387,49 @@ struct UndoView: View {
         playerUpdates[playerId] = (bid: bid, tricks: tricks)
     }
     
+    private func validateUpdates() -> Bool {
+        // Get the number of cards for the round being undone
+        let cardsDealt = selectedRound
+        var totalBids = 0
+        var totalTricks = 0
+        
+        // Calculate total bids and tricks
+        for player in game.players {
+            let bid = playerUpdates[player.id]?.bid ?? roundData.first(where: { $0.player.id == player.id })?.bid ?? -1
+            let tricks = playerUpdates[player.id]?.tricks ?? roundData.first(where: { $0.player.id == player.id })?.tricks ?? -1
+            
+            if bid != -1 {
+                totalBids += bid
+            }
+            
+            if tricks != -1 {
+                totalTricks += tricks
+            }
+        }
+        
+        // Check if total tricks exceed cards dealt
+        if totalTricks > cardsDealt {
+            errorMessage = game.localizedString("totalTricksExceedCards")
+            return false
+        }
+        
+        // Check if total tricks are less than cards dealt
+        if totalTricks < cardsDealt {
+            errorMessage = game.localizedString("totalTricksLessThanCards")
+            return false
+        }
+        
+        // No need to validate individual bids as they can exceed cards dealt
+        
+        return true
+    }
+    
     private func applyChanges() {
+        if !validateUpdates() {
+            showingError = true
+            return
+        }
+        
         let updates = playerUpdates.map { (playerId: UUID, values: (bid: Int?, tricks: Int?)) in
             (playerId: playerId, bid: values.bid, tricks: values.tricks)
         }
@@ -471,6 +515,13 @@ struct UndoView: View {
             .navigationBarItems(trailing: Button(game.localizedString("cancel")) {
                 presentationMode.wrappedValue.dismiss()
             })
+            .alert(isPresented: $showingError) {
+                Alert(
+                    title: Text(game.localizedString("error")),
+                    message: Text(errorMessage ?? ""),
+                    dismissButton: .default(Text(game.localizedString("ok")))
+                )
+            }
         }
     }
 }

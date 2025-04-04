@@ -71,7 +71,13 @@ class Game: ObservableObject {
                 """,
                 "undo": "Undo Round",
                 "undoRound": "Undo Round",
-                "applyChanges": "Apply Changes"
+                "applyChanges": "Apply Changes",
+                "error": "Error",
+                "ok": "OK",
+                "totalBidsExceedCards": "Total bids exceed cards dealt",
+                "totalTricksExceedCards": "Total tricks exceed cards dealt",
+                "totalTricksLessThanCards": "Total tricks must equal cards dealt",
+                "exceedsCards": "exceeds cards dealt"
             ]
         case .georgian:
             return [
@@ -132,7 +138,13 @@ class Game: ObservableObject {
                 """,
                 "undo": "რაუნდის გაუქმება",
                 "undoRound": "რაუნდის გაუქმება",
-                "applyChanges": "ცვლილებების გამოყენება"
+                "applyChanges": "ცვლილებების გამოყენება",
+                "error": "შეცდომა",
+                "ok": "კარგი",
+                "totalBidsExceedCards": "ნათქვამების ჯამი აღემატება გაცემულ ბარათებს",
+                "totalTricksExceedCards": "აღებულების ჯამი აღემატება გაცემულ ბარათებს",
+                "totalTricksLessThanCards": "აღებულების ჯამი უნდა იყოს გაცემული ბარათების ტოლი",
+                "exceedsCards": "აღემატება გაცემულ ბარათებს"
             ]
         }
     }
