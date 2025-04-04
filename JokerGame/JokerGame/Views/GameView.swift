@@ -366,6 +366,115 @@ struct SettingsView: View {
     }
 }
 
+struct UndoView: View {
+    @ObservedObject var game: Game
+    @Environment(\.presentationMode) var presentationMode
+    @State private var selectedRound: Int
+    @State private var playerUpdates: [UUID: (bid: Int?, tricks: Int?)] = [:]
+    
+    init(game: Game) {
+        self.game = game
+        _selectedRound = State(initialValue: game.currentRound - 1)
+    }
+    
+    private var roundData: [(player: Game.Player, bid: Int, tricks: Int)] {
+        game.getRoundBidsAndTakes(round: selectedRound)
+    }
+    
+    private func updatePlayer(playerId: UUID, bid: Int?, tricks: Int?) {
+        playerUpdates[playerId] = (bid: bid, tricks: tricks)
+    }
+    
+    private func applyChanges() {
+        let updates = playerUpdates.map { (playerId: UUID, values: (bid: Int?, tricks: Int?)) in
+            (playerId: playerId, bid: values.bid, tricks: values.tricks)
+        }
+        game.updateRoundBidsAndTakes(round: selectedRound, updates: updates)
+        game.applyUndoChanges()
+        presentationMode.wrappedValue.dismiss()
+    }
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                // Round Picker
+                Picker("Round", selection: $selectedRound) {
+                    ForEach(1..<game.currentRound, id: \.self) { round in
+                        Text("\(game.localizedString("round")) \(round)")
+                            .tag(round)
+                    }
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .padding()
+                
+                // Players Grid
+                ScrollView {
+                    LazyVGrid(columns: [
+                        GridItem(.flexible()),
+                        GridItem(.flexible())
+                    ], spacing: 15) {
+                        ForEach(roundData, id: \.player.id) { data in
+                            VStack(spacing: 8) {
+                                Text(data.player.name)
+                                    .font(.headline)
+                                    .foregroundColor(data.player.isDealer ? .jokerRed : .primary)
+                                
+                                HStack {
+                                    // Bid Section
+                                    VStack {
+                                        Text(game.localizedString("bid"))
+                                            .font(.caption)
+                                        TextField("Bid", value: Binding(
+                                            get: { playerUpdates[data.player.id]?.bid ?? data.bid },
+                                            set: { updatePlayer(playerId: data.player.id, bid: $0, tricks: playerUpdates[data.player.id]?.tricks) }
+                                        ), formatter: NumberFormatter())
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .frame(width: 60)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    // Tricks Section
+                                    VStack {
+                                        Text(game.localizedString("tricks"))
+                                            .font(.caption)
+                                        TextField("Tricks", value: Binding(
+                                            get: { playerUpdates[data.player.id]?.tricks ?? data.tricks },
+                                            set: { updatePlayer(playerId: data.player.id, bid: playerUpdates[data.player.id]?.bid, tricks: $0) }
+                                        ), formatter: NumberFormatter())
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .frame(width: 60)
+                                    }
+                                }
+                            }
+                            .padding()
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(10)
+                        }
+                    }
+                    .padding()
+                }
+                
+                // Apply Button
+                Button(action: applyChanges) {
+                    Text(game.localizedString("applyChanges"))
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .cornerRadius(10)
+                }
+                .padding()
+            }
+            .navigationTitle(game.localizedString("undoRound"))
+            .navigationBarItems(trailing: Button(game.localizedString("cancel")) {
+                presentationMode.wrappedValue.dismiss()
+            })
+        }
+    }
+}
+
 struct GameView: View {
     @StateObject private var game = Game()
     @State private var playerNames: [String] = Array(repeating: "", count: 4)
@@ -387,6 +496,7 @@ struct GameView: View {
     @Environment(\.colorScheme) var colorScheme
     @State private var showingSettings = false
     @State private var lastSystemTheme: ColorScheme?
+    @State private var showingUndoView = false
     
     private var currentTheme: ColorScheme {
         if let theme = selectedTheme.colorScheme {
@@ -749,6 +859,18 @@ struct GameView: View {
                                         }
                                         
                                         Button(action: {
+                                            showingUndoView = true
+                                        }) {
+                                            Text(game.localizedString("undo"))
+                                                .font(.headline)
+                                                .foregroundColor(.white)
+                                                .frame(maxWidth: .infinity)
+                                                .padding()
+                                                .background(Color.orange)
+                                                .cornerRadius(10)
+                                        }
+                                        
+                                        Button(action: {
                                             showingFinalScores = true
                                         }) {
                                             Text(game.isGameComplete ? game.localizedString("showFinalScores") : game.localizedString("returnHome"))
@@ -780,6 +902,9 @@ struct GameView: View {
                         .navigationTitle("Joker Game")
                         .sheet(isPresented: $showingFinalScores) {
                             finalScoresView
+                        }
+                        .sheet(isPresented: $showingUndoView) {
+                            UndoView(game: game)
                         }
                     }
                 }

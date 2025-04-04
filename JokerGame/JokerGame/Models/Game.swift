@@ -68,7 +68,10 @@ class Game: ObservableObject {
                 • Taking more or fewer tricks than bid results in penalties
                 • The game ends after all rounds are complete
                 • Highest score wins!
-                """
+                """,
+                "undo": "Undo Round",
+                "undoRound": "Undo Round",
+                "applyChanges": "Apply Changes"
             ]
         case .georgian:
             return [
@@ -126,7 +129,10 @@ class Game: ObservableObject {
                 • მეტის ან ნაკლების აღება იწვევს ჯარიმას
                 • თამაში მთავრდება ყველა რაუნდის დასრულების შემდეგ
                 • მაღალი ქულა იმარჯვებს!
-                """
+                """,
+                "undo": "რაუნდის გაუქმება",
+                "undoRound": "რაუნდის გაუქმება",
+                "applyChanges": "ცვლილებების გამოყენება"
             ]
         }
     }
@@ -154,13 +160,28 @@ class Game: ObservableObject {
     @Published var isGameComplete = false
     @Published var isBiddingComplete = false
     var kishtiPenalty = -200
-    private var roundScores: [[Int]] = []
-    private var biddingOrder: [UUID] = []  // Track order of bidders
     
     @Published var gameMode: GameMode = .standard
     @Published var khisthiMode: KhisthiMode = .speci
     
     private var audioPlayer: AVAudioPlayer?
+    
+    // Add these properties after other @Published properties
+    @Published var isUndoMode: Bool = false
+    @Published var selectedUndoRound: Int = 1
+    
+    // Add this property to track bidding order
+    private var biddingOrder: [UUID] = []
+    
+    // Add this struct before the Game class
+    struct RoundData {
+        var bids: [UUID: Int] = [:]
+        var tricks: [UUID: Int] = [:]
+        var scores: [Int] = []
+    }
+
+    // Update the roundScores property
+    private var roundScores: [RoundData] = []
     
     class Player: Identifiable {
         let id = UUID()
@@ -189,6 +210,7 @@ class Game: ObservableObject {
         isGameComplete = false
         isBiddingComplete = false
         roundScores = []
+        biddingOrder = []  // Reset bidding order
         
         // Set last player as dealer
         for i in 0..<players.count {
@@ -338,15 +360,22 @@ class Game: ObservableObject {
         let allTricksSet = players.allSatisfy { $0.currentTricks != -1 }
         
         if allTricksSet {
+            // Create new round data
+            var roundData = RoundData()
+            
             // Calculate scores for this round
-            var roundScore = [Int]()
             for i in 0..<players.count {
                 let score = calculateScore(for: players[i])
                 players[i].score += score
                 players[i].roundScores.append(score)
-                roundScore.append(score)
+                roundData.scores.append(score)
+                
+                // Store bids and tricks
+                roundData.bids[players[i].id] = players[i].currentBid
+                roundData.tricks[players[i].id] = players[i].currentTricks
             }
-            roundScores.append(roundScore)
+            
+            roundScores.append(roundData)
             
             // Check if this was the last round
             if currentRound >= 24 {
@@ -367,6 +396,7 @@ class Game: ObservableObject {
         isGameComplete = false
         isBiddingComplete = false
         roundScores = []
+        biddingOrder = []  // Reset bidding order
     }
     
     func cardsInRound() -> Int {
@@ -387,7 +417,7 @@ class Game: ObservableObject {
     // Get scores for a specific round
     func getRoundScores(round: Int) -> [Int]? {
         guard round > 0 && round <= roundScores.count else { return nil }
-        return roundScores[round - 1]
+        return roundScores[round - 1].scores
     }
     
     // Get the next player who should bid (player after dealer)
@@ -509,5 +539,122 @@ class Game: ObservableObject {
     func stopBackgroundMusic() {
         audioPlayer?.stop()
         audioPlayer = nil
+    }
+    
+    // Add these methods before the end of the class
+    func enterUndoMode() {
+        isUndoMode = true
+        selectedUndoRound = currentRound - 1
+    }
+    
+    func exitUndoMode() {
+        isUndoMode = false
+        selectedUndoRound = 1
+    }
+    
+    func getRoundBidsAndTakes(round: Int) -> [(player: Player, bid: Int, tricks: Int)] {
+        guard round > 0 && round <= roundScores.count else { return [] }
+        let roundData = roundScores[round - 1]
+        return players.map { player in
+            (player: player, 
+             bid: roundData.bids[player.id] ?? -1,
+             tricks: roundData.tricks[player.id] ?? -1)
+        }
+    }
+    
+    func updateRoundBidsAndTakes(round: Int, updates: [(playerId: UUID, bid: Int?, tricks: Int?)]) {
+        guard round > 0 && round <= roundScores.count else { return }
+        var roundData = roundScores[round - 1]
+        
+        for update in updates {
+            if let bid = update.bid {
+                roundData.bids[update.playerId] = bid
+            }
+            if let tricks = update.tricks {
+                roundData.tricks[update.playerId] = tricks
+            }
+        }
+        
+        // Recalculate scores for this round
+        roundData.scores = []
+        for player in players {
+            let bid = roundData.bids[player.id] ?? -1
+            let tricks = roundData.tricks[player.id] ?? -1
+            let score = calculateScore(bid: bid, tricks: tricks)
+            roundData.scores.append(score)
+        }
+        
+        roundScores[round - 1] = roundData
+        recalculateScores()
+    }
+    
+    func applyUndoChanges() {
+        guard isUndoMode else { return }
+        
+        // Reset the game state to the selected round
+        currentRound = selectedUndoRound
+        isBiddingComplete = false
+        
+        // Reset all players' current bids and tricks
+        for player in players {
+            player.currentBid = -1
+            player.currentTricks = -1
+        }
+        
+        // Exit undo mode
+        exitUndoMode()
+    }
+    
+    // Add a helper method for calculating score from bid and tricks
+    private func calculateScore(bid: Int, tricks: Int) -> Int {
+        let cardsDealt = cardsInRound()
+        
+        if bid == tricks {
+            if bid == 0 {
+                return 50  // Special case for bid 0, take 0
+            } else {
+                // If bid matches both tricks and cards dealt, give 100 points per card
+                if bid == cardsDealt {
+                    return bid * 100  // 100 for bid 1, 200 for bid 2, 300 for bid 3, etc.
+                } else {
+                    return 50 + (bid * 50)  // 100 for bid 1, 150 for bid 2, 200 for bid 3, etc.
+                }
+            }
+        } else {
+            let isKhisthi = bid > 0 && tricks == 0
+            
+            if isKhisthi {
+                switch khisthiMode {
+                case .speci:
+                    return -100 * cardsInRound()
+                case .fixed200:
+                    return -200
+                case .fixed500:
+                    return -500
+                }
+            } else {
+                let difference = abs(bid - tricks)
+                return difference * 10  // 10 points per difference
+            }
+        }
+    }
+    
+    // Add the recalculateScores method
+    private func recalculateScores() {
+        // Reset all player scores
+        for player in players {
+            player.score = 0
+            player.roundScores = []
+        }
+        
+        // Recalculate scores for each round
+        for roundData in roundScores {
+            for i in 0..<players.count {
+                let player = players[i]
+                let score = roundData.scores[i]
+                player.score += score
+                player.roundScores.append(score)
+            }
+        }
     }
 } 
