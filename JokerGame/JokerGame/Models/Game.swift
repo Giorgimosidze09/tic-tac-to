@@ -77,7 +77,10 @@ class Game: ObservableObject {
                 "totalBidsExceedCards": "Total bids exceed cards dealt",
                 "totalTricksExceedCards": "Total tricks exceed cards dealt",
                 "totalTricksLessThanCards": "Total tricks must equal cards dealt",
-                "exceedsCards": "exceeds cards dealt"
+                "exceedsCards": "exceeds cards dealt",
+                "viewStyle": "View Style",
+                "standardViewDescription": "Classic table view with bids and scores",
+                "improvedViewDescription": "Modern card-based view with detailed information"
             ]
         case .georgian:
             return [
@@ -144,7 +147,10 @@ class Game: ObservableObject {
                 "totalBidsExceedCards": "ნათქვამების ჯამი აღემატება გაცემულ ბარათებს",
                 "totalTricksExceedCards": "აღებულების ჯამი აღემატება გაცემულ ბარათებს",
                 "totalTricksLessThanCards": "აღებულების ჯამი უნდა იყოს გაცემული ბარათების ტოლი",
-                "exceedsCards": "აღემატება გაცემულ ბარათებს"
+                "exceedsCards": "აღემატება გაცემულ ბარათებს",
+                "viewStyle": "ხედის სტილი",
+                "standardViewDescription": "კლასიკური ცხრილის ხედი ნათქვამებით და ქულებით",
+                "improvedViewDescription": "თანამედროვე ბარათებზე დაფუძნებული ხედი დეტალური ინფორმაციით"
             ]
         }
     }
@@ -669,4 +675,11 @@ class Game: ObservableObject {
             }
         }
     }
+
+    enum ViewStyle: String, CaseIterable {
+        case standard = "standard"
+        case improved = "improved"
+    }
+
+    @Published var viewStyle: ViewStyle = .improved
 } 

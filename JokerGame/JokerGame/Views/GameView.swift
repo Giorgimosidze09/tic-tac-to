@@ -198,6 +198,27 @@ private struct GameRulesSection: View {
     }
 }
 
+private struct ViewStyleSection: View {
+    @ObservedObject var game: Game
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Picker("View Style", selection: $game.viewStyle) {
+                ForEach(Game.ViewStyle.allCases, id: \.self) { style in
+                    Text(game.localizedString(style.rawValue))
+                        .tag(style)
+                }
+            }
+            .pickerStyle(SegmentedPickerStyle())
+            
+            Text(game.localizedString("\(game.viewStyle.rawValue)ViewDescription"))
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .padding(.top, 4)
+        }
+    }
+}
+
 struct SettingsView: View {
     @Binding var selectedTheme: AppTheme
     @Binding var selectedGameMode: Game.GameMode
@@ -254,6 +275,24 @@ struct SettingsView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
+                    // View Style Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(game.localizedString("viewStyle"))
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.jokerRed)
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            ViewStyleSection(game: game)
+                        }
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(cardBackgroundColor)
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    )
+                    
                     // Language Section
                     VStack(alignment: .leading, spacing: 12) {
                         Text(game.localizedString("language"))
@@ -867,94 +906,104 @@ struct GameView: View {
                             )
                         }
                     } else {
-                        // Main Game View
-                        ZStack {
-                            ScrollView {
-                                VStack(spacing: 15) {
-                                    // Round Info Card with gradient
-                                    RoundInfoView(game: game)
-                                        .padding(.horizontal)
-                                        .background(
-                                            LinearGradient(
-                                                gradient: Gradient(colors: [.jokerRed.opacity(0.1), .jokerGreen.opacity(0.1)]),
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
-                                        )
-                                    
-                                    // Players Grid with animated cards
-                                    LazyVGrid(columns: [
-                                        GridItem(.flexible()),
-                                        GridItem(.flexible())
-                                    ], spacing: 15) {
-                                        ForEach(game.players) { player in
-                                            PlayerView(player: player, game: game)
-                                                .transition(.scale.combined(with: .opacity))
-                                                .animation(.spring(), value: player.currentBid)
-                                                .animation(.spring(), value: player.currentTricks)
-                                        }
-                                    }
-                                    .padding(.horizontal)
-                                    
-                                    // Action Buttons
-                                    VStack(spacing: 10) {
-                                        if game.isRoundComplete {
-                                            Button(action: {
-                                                game.startRound()
-                                            }) {
-                                                Text(game.localizedString("nextRound"))
-                                                    .font(.headline)
-                                                    .foregroundColor(.white)
-                                                    .frame(maxWidth: .infinity)
-                                                    .padding()
-                                                    .background(Color.blue)
-                                                    .cornerRadius(10)
+                        // Main Game View - Switch between Standard and Improved views
+                        Group {
+                            if game.viewStyle == .standard {
+                                StandardGameView(
+                                    game: game,
+                                    showingFinalScores: $showingFinalScores,
+                                    showingUndoView: $showingUndoView
+                                )
+                                .forceLandscape()
+                                .navigationBarHidden(true)
+                            } else {
+                                // Existing improved view layout
+                                ZStack {
+                                    ScrollView {
+                                        VStack(spacing: 15) {
+                                            // Round Info Card
+                                            RoundInfoView(game: game)
+                                                .padding(.horizontal)
+                                            
+                                            // Players Grid
+                                            LazyVGrid(columns: [
+                                                GridItem(.flexible()),
+                                                GridItem(.flexible())
+                                            ], spacing: 15) {
+                                                ForEach(game.players) { player in
+                                                    PlayerView(player: player, game: game)
+                                                        .transition(.scale.combined(with: .opacity))
+                                                        .animation(.spring(), value: player.currentBid)
+                                                        .animation(.spring(), value: player.currentTricks)
+                                                }
                                             }
+                                            .padding(.horizontal)
+                                            
+                                            // Action Buttons
+                                            VStack(spacing: 10) {
+                                                if game.isRoundComplete {
+                                                    Button(action: {
+                                                        game.startRound()
+                                                    }) {
+                                                        Text(game.localizedString("nextRound"))
+                                                            .font(.headline)
+                                                            .foregroundColor(.white)
+                                                            .frame(maxWidth: .infinity)
+                                                            .padding()
+                                                            .background(Color.blue)
+                                                            .cornerRadius(10)
+                                                    }
+                                                }
+                                                
+                                                Button(action: {
+                                                    showingUndoView = true
+                                                }) {
+                                                    Text(game.localizedString("undo"))
+                                                        .font(.headline)
+                                                        .foregroundColor(.white)
+                                                        .frame(maxWidth: .infinity)
+                                                        .padding()
+                                                        .background(Color.orange)
+                                                        .cornerRadius(10)
+                                                }
+                                                
+                                                Button(action: {
+                                                    showingFinalScores = true
+                                                }) {
+                                                    Text(game.isGameComplete ? game.localizedString("showFinalScores") : game.localizedString("returnHome"))
+                                                        .font(.headline)
+                                                        .foregroundColor(.white)
+                                                        .frame(maxWidth: .infinity)
+                                                        .padding()
+                                                        .background(game.isGameComplete ? Color.green : Color.blue)
+                                                        .cornerRadius(10)
+                                                }
+                                            }
+                                            .padding(.horizontal)
+                                            .padding(.top, 10)
+                                            .padding(.bottom, 20)
                                         }
-                                        
-                                        Button(action: {
-                                            showingUndoView = true
-                                        }) {
-                                            Text(game.localizedString("undo"))
-                                                .font(.headline)
-                                                .foregroundColor(.white)
-                                                .frame(maxWidth: .infinity)
-                                                .padding()
-                                                .background(Color.orange)
-                                                .cornerRadius(10)
-                                        }
-                                        
-                                        Button(action: {
-                                            showingFinalScores = true
-                                        }) {
-                                            Text(game.isGameComplete ? game.localizedString("showFinalScores") : game.localizedString("returnHome"))
-                                                .font(.headline)
-                                                .foregroundColor(.white)
-                                                .frame(maxWidth: .infinity)
-                                                .padding()
-                                                .background(game.isGameComplete ? Color.green : Color.blue)
-                                                .cornerRadius(10)
-                                        }
+                                        .padding(.vertical)
+                                        .padding(.bottom, !availableNumbers.isEmpty ? 300 : 0)
                                     }
-                                    .padding(.horizontal)
-                                    .padding(.top, 10)
-                                    .padding(.bottom, 20)
+                                    
+                                    // Keyboard overlay
+                                    if !availableNumbers.isEmpty {
+                                        VStack {
+                                            Spacer()
+                                            numberKeyboard
+                                                .padding(.bottom, 20)
+                                        }
+                                        .frame(maxHeight: .infinity, alignment: .bottom)
+                                        .ignoresSafeArea(.keyboard)
+                                    }
                                 }
-                                .padding(.vertical)
-                                .padding(.bottom, !availableNumbers.isEmpty ? 300 : 0)
-                            }
-                            .preferredColorScheme(currentTheme)
-                            .background(backgroundColor)
-                            
-                            // Keyboard overlay
-                            if !availableNumbers.isEmpty {
-                                VStack {
-                                    Spacer()
-                                    numberKeyboard
-                                        .padding(.bottom, 20)
+                                .onAppear {
+                                    // Reset to portrait when showing improved view
+                                    AppDelegate.orientationLock = .all
+                                    UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
+                                    UINavigationController.attemptRotationToDeviceOrientation()
                                 }
-                                .frame(maxHeight: .infinity, alignment: .bottom)
-                                .ignoresSafeArea(.keyboard)
                             }
                         }
                         .navigationTitle("Joker Game")
@@ -1409,5 +1458,298 @@ struct RoundInfoView: View {
                 .fill(cardBackgroundColor)
                 .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
         )
+    }
+}
+
+extension View {
+    func forceLandscape() -> some View {
+        self.modifier(LandscapeModifier())
+    }
+}
+
+struct StandardGameView: View {
+    @ObservedObject var game: Game
+    @Environment(\.colorScheme) var colorScheme
+    @Binding var showingFinalScores: Bool
+    @Binding var showingUndoView: Bool
+    
+    private var isDarkMode: Bool {
+        colorScheme == .dark
+    }
+    
+    private var gridColor: Color {
+        isDarkMode ? Color.white.opacity(0.2) : Color.black.opacity(0.2)
+    }
+    
+    private var cardBackgroundColor: Color {
+        isDarkMode ? Color(.secondarySystemBackground) : Color(.systemBackground)
+    }
+    
+    private func cellBackgroundColor(row: Int, column: Int) -> Color {
+        if let currentPlayer = currentPlayer,
+           row == game.players.firstIndex(where: { $0.id == currentPlayer.id }) {
+            return Color.green.opacity(0.2)
+        }
+        return Color.clear
+    }
+    
+    private func formatScore(_ score: Int) -> String {
+        if score == 0 {
+            return "0.0"
+        }
+        let absScore = abs(score)
+        let wholePart = absScore / 100
+        let decimalPart = (absScore % 100) / 10
+        let formattedScore = "\(wholePart).\(decimalPart)"
+        return score < 0 ? "-\(formattedScore)" : formattedScore
+    }
+    
+    private var currentPlayer: Game.Player? {
+        if let nextBidder = game.getNextBidder() {
+            return nextBidder
+        } else if let nextTaker = game.getNextTaker() {
+            return nextTaker
+        }
+        return nil
+    }
+    
+    private var availableNumbers: [Int] {
+        guard let player = currentPlayer else { return [] }
+        
+        if !game.isBiddingComplete && player.currentBid == -1 {
+            return Array(0...game.cardsInRound())
+        } else if game.isBiddingComplete && player.currentTricks == -1 {
+            let otherPlayersTricks = game.players
+                .filter { $0.id != player.id }
+                .reduce(0) { $0 + ($1.currentTricks == -1 ? 0 : $1.currentTricks) }
+            let remainingTricks = game.cardsInRound() - otherPlayersTricks
+            
+            if remainingTricks > 0 && game.players.filter({ $0.currentTricks == -1 }).count == 1 {
+                return [remainingTricks]
+            }
+            
+            return remainingTricks >= 0 ? Array(0...remainingTricks) : []
+        }
+        return []
+    }
+    
+    private func isBidValid(_ bid: Int) -> Bool {
+        guard let player = currentPlayer, player.isDealer else { return true }
+        let otherPlayersBids = game.players
+            .filter { $0.id != player.id }
+            .reduce(0) { $0 + ($1.currentBid == -1 ? 0 : $1.currentBid) }
+        return bid + otherPlayersBids != game.cardsInRound()
+    }
+    
+    private var numberKeyboard: some View {
+        VStack(spacing: 0) {
+            Text("\(currentPlayer?.name ?? "")'s \(game.isBiddingComplete ? game.localizedString("tricks") : game.localizedString("bid"))")
+                .font(.headline)
+                .padding(.vertical, 8)
+            
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 0) {
+                ForEach(availableNumbers, id: \.self) { number in
+                    let isValid = !game.isBiddingComplete && currentPlayer?.isDealer == true ? 
+                        isBidValid(number) : true
+                    
+                    Button(action: { 
+                        if isValid {
+                            handleNumberSelection(number)
+                        }
+                    }) {
+                        Text("\(number)")
+                            .font(.title)
+                            .fontWeight(.bold)
+                            .foregroundColor(isValid ? .white : .gray)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 60)
+                            .background(isValid ? Color.blue : Color.gray.opacity(0.3))
+                    }
+                    .disabled(!isValid)
+                }
+            }
+        }
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(radius: 2)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal)
+    }
+    
+    private func handleNumberSelection(_ number: Int) {
+        guard let player = currentPlayer else { return }
+        if !game.isBiddingComplete && player.currentBid == -1 {
+            game.setBid(for: player, bid: number)
+        } else if game.isBiddingComplete && player.currentTricks == -1 {
+            let otherPlayersTricks = game.players
+                .filter { $0.id != player.id }
+                .reduce(0) { $0 + ($1.currentTricks == -1 ? 0 : $1.currentTricks) }
+            let remainingTricks = game.cardsInRound() - otherPlayersTricks
+            
+            if remainingTricks > 0 && game.players.filter({ $0.currentTricks == -1 }).count == 1 {
+                game.setTricks(for: player, tricks: remainingTricks)
+            } else {
+                game.setTricks(for: player, tricks: number)
+            }
+        }
+    }
+    
+    var body: some View {
+        GeometryReader { geometry in
+            HStack(spacing: 0) {
+                // Left side - Game Table
+                ScrollView(.horizontal) {
+                    VStack(spacing: 15) {
+                        // Round Info and Table
+                        HStack(spacing: 20) {
+                            // Round Info
+                            RoundInfoView(game: game)
+                                .frame(width: 200)
+                            
+                            // Game Table
+                            VStack(spacing: 0) {
+                                // Header Row
+                                HStack(spacing: 0) {
+                                    Text("")
+                                        .frame(width: 40)
+                                        .padding(6)
+                                        .border(gridColor)
+                                    
+                                    ForEach(game.players) { player in
+                                        VStack {
+                                            Text(player.name)
+                                                .font(.caption)
+                                                .fontWeight(.bold)
+                                                .foregroundColor(player.isDealer ? .jokerRed : .primary)
+                                            if player.isDealer {
+                                                Text("D")
+                                                    .font(.caption2)
+                                                    .foregroundColor(.jokerRed)
+                                            }
+                                        }
+                                        .frame(width: 80)
+                                        .padding(6)
+                                        .border(gridColor)
+                                    }
+                                }
+                                
+                                // Bid Rows
+                                ForEach(0..<game.currentRound, id: \.self) { round in
+                                    HStack(spacing: 0) {
+                                        Text("\(round + 1)")
+                                            .font(.caption)
+                                            .frame(width: 40)
+                                            .padding(6)
+                                            .border(gridColor)
+                                        
+                                        ForEach(game.players) { player in
+                                            let roundData = game.getRoundBidsAndTakes(round: round + 1)
+                                            let playerData = roundData.first(where: { $0.player.id == player.id })
+                                            
+                                            VStack(spacing: 4) {
+                                                if let data = playerData {
+                                                    Text("\(data.bid)")
+                                                        .font(.caption)
+                                                    Text("\(data.tricks)")
+                                                        .font(.caption)
+                                                        .foregroundColor(.secondary)
+                                                }
+                                            }
+                                            .frame(width: 80)
+                                            .padding(6)
+                                            .background(cellBackgroundColor(row: game.players.firstIndex(where: { $0.id == player.id }) ?? 0, column: round))
+                                            .border(gridColor)
+                                        }
+                                    }
+                                }
+                                
+                                // Score Row
+                                HStack(spacing: 0) {
+                                    Text("Score")
+                                        .font(.caption)
+                                        .frame(width: 40)
+                                        .padding(6)
+                                        .border(gridColor)
+                                    
+                                    ForEach(game.players) { player in
+                                        Text(formatScore(player.score))
+                                            .font(.caption)
+                                            .frame(width: 80)
+                                            .padding(6)
+                                            .border(gridColor)
+                                    }
+                                }
+                            }
+                            .background(cardBackgroundColor)
+                            .cornerRadius(12)
+                        }
+                        .padding(.horizontal)
+                    }
+                    .padding(.vertical)
+                }
+                .frame(width: geometry.size.width * 0.75)
+                
+                // Right side - Controls
+                VStack {
+                    // Action Buttons at the top
+                    VStack(spacing: 10) {
+                        if game.isRoundComplete {
+                            Button(action: {
+                                game.startRound()
+                            }) {
+                                Text(game.localizedString("nextRound"))
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.blue)
+                                    .cornerRadius(10)
+                            }
+                        }
+                        
+                        Button(action: {
+                            showingUndoView = true
+                        }) {
+                            Text(game.localizedString("undo"))
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.orange)
+                                .cornerRadius(10)
+                        }
+                        
+                        Button(action: {
+                            showingFinalScores = true
+                        }) {
+                            Text(game.isGameComplete ? game.localizedString("showFinalScores") : game.localizedString("returnHome"))
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(game.isGameComplete ? Color.green : Color.blue)
+                                .cornerRadius(10)
+                        }
+                    }
+                    .padding()
+                    
+                    Spacer()
+                    
+                    // Keyboard at the bottom
+                    if !availableNumbers.isEmpty {
+                        numberKeyboard
+                            .padding(.bottom)
+                    }
+                }
+                .frame(width: geometry.size.width * 0.25)
+                .background(cardBackgroundColor)
+            }
+        }
+        .ignoresSafeArea(.keyboard)
+        .forceLandscape()
     }
 } 
